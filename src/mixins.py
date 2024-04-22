@@ -152,11 +152,10 @@ class ListMixin(SiteMixin):
             yield list(self.items_for_result(res))
 
     def get_url_for_result(self, result):
-        url = try_get_url(
+        return try_get_url(
             f'.change_{self.blueprint_name}',
             **{'model_name': self.model_name, 'pk': result.id}
         )
-        return url
 
     def items_for_result(self, result):
         """Заполнение строки таблицы"""
@@ -260,7 +259,7 @@ class FormMixin(SiteMixin):
             if isinstance(field, (FileField, MultipleFileField)):
                 form.is_multipart = True
             if isinstance(field, SelectField):
-                model_name = field.render_kw.get('model')
+                model_name = field.render_kw.pop('model')
                 if model_name is None:
                     raise TypeError(
                         f'Отсутствует ключ "model" параметра "render_kw" для '

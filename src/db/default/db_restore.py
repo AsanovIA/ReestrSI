@@ -1,6 +1,5 @@
 from src.db.default.db_data import default_data
 from src.db.repository import Repository
-
 from src.utils import get_model
 
 

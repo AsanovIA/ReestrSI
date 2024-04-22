@@ -17,14 +17,15 @@ def try_get_url(endpoint: str, **kwargs):
 
 
 def get_model(model_name: str):
-    try:
-        module = import_module('admin.config')
-        app_settings = getattr(module, 'app_settings')
-        model = app_settings.get(model_name.lower())
-        if model:
-            return model
-    except (ModuleNotFoundError, KeyError, AttributeError):
-        pass
+    for app_name in ['admin', 'users']:
+        try:
+            module = import_module(f'{app_name}.config')
+            app_settings = getattr(module, 'app_settings')
+            model = app_settings.get(model_name.lower())
+            if model:
+                return model
+        except (ModuleNotFoundError, KeyError, AttributeError):
+            pass
 
     abort(404)
 
@@ -32,14 +33,15 @@ def get_model(model_name: str):
 def get_form_class(model=None):
     model = model or g.model
     form_class_name = g.form_class_name or model.__name__ + "Form"
-    try:
-        module = import_module('admin.forms')
-        form_class = getattr(module, form_class_name)
+    for app_name in ['admin', 'users']:
+        try:
+            module = import_module(f'{app_name}.forms')
+            form_class = getattr(module, form_class_name)
 
-        return form_class
+            return form_class
 
-    except (ModuleNotFoundError, AttributeError):
-        pass
+        except (ModuleNotFoundError, AttributeError):
+            pass
 
     abort(404)
 

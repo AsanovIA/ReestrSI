@@ -160,4 +160,24 @@ default_data = {
             'is_service': True,
         },
     ],
+    'Users': [
+        {
+            'username': 'admin',
+            'password': '123',
+            'last_name': 'фамилия админа',
+            'first_name': 'Имя админа',
+            'middle_name': 'Отчество админа',
+            'email': 'admin@si.ru',
+            'is_active': True,
+        },
+        {
+            'username': 'user',
+            'password': '123',
+            'last_name': 'фамилия юзера',
+            'first_name': 'Имя юзера',
+            'middle_name': 'Отчество юзера',
+            'email': 'user@si.ru',
+            'is_active': True,
+        },
+    ],
 }

@@ -1,6 +1,4 @@
-from src.mixins import (
-    ListMixin, ChangeMixin, AddMixin, DeleteMixin
-)
+from src.mixins import ListMixin, ChangeMixin, AddMixin, DeleteMixin
 from src.admin.models import *
 
 
