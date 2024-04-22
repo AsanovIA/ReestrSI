@@ -1,0 +1,44 @@
+{% extends 'base_admin.html' %}
+{% block extrastyle %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/forms.css') }}">
+{{ media }}
+{% endblock extrastyle %}
+
+{% block content %}
+<div id="content-main">
+    <form {% if form.is_multipart %} enctype="multipart/form-data"{% endif %}
+          method="post" id="{{ model_name }}_form" novalidate>{{ form.hidden_tag() }}
+        <div>
+            {#{% include 'include/submit_row.html' %}#}
+            {% if content_title %}<h2>{{ content_title }}</h2>{% endif %}
+
+            {% if form.errors %}
+                <p class="errornote">Пожалуйста, исправьте ошибки ниже.</p>
+            {% endif %}
+
+<fieldset class="module aligned">
+    {% for field in form if field.name in form.fields %}
+    <div class="form-row{% if field.errors %} errors{% endif %}{% if field.name %} field-{{ field.name }}{% endif %}">
+        {% if field.errors %}
+            <ul class="errorlist">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+        {% endif %}
+        <div>
+            <div class="flex-container">
+                {{ field.label(**field.label_class) }}
+                {{ field }}
+            </div>
+            {% if field.description %}
+            <div class="help">
+                <div>{{ field.description|safe }}</div>
+            </div>
+           {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</fieldset>
+
+        </div>
+    </form>
+</div>
+{% endblock content %}

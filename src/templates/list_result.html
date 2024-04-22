@@ -1,0 +1,40 @@
+{% extends 'base_admin.html' %}
+{% block extrastyle %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/changelists.css') }}">
+{% endblock extrastyle %}
+{% block content %}
+<div id="content-main">
+    <div id="changelist" class="module">
+        <div class="changelist-form-container">
+            <form id="changelist-form" method="post" novalidate>
+                {% if btn %}
+                {% include 'include/submit_row.html' %}
+                {% endif %}
+
+                {% if content_title %}<h1>{{ content_title }}</h1>{% endif %}
+                {% block header_change_list %}{% endblock %}
+                <div class="results">
+                    <table id="result_list">
+                        <thead>
+                            <tr>
+                                {% for header in result_headers %}
+                                <th scope="col">
+                                   <div class="text"><span>{{ header.text|capitalize }}</span></div>
+                                   <div class="clear"></div>
+                                </th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for result in results %}
+                                <tr>{% for item in result %}{{ item }}{% endfor %}</tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock content %}
