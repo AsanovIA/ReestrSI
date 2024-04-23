@@ -1,0 +1,17 @@
+{% extends 'base_admin.html' %}
+
+{% block sidebar_style %}{% endblock sidebar_style %}
+
+{% block extrastyle %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock extrastyle %}
+
+{% block sidebar %}{% endblock sidebar%}
+{% block bodyclass %}dashboard{% endblock %}
+{% block coltype %}colMS{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    {% include 'include/model_list.html' %}
+</div>
+{% endblock content%}

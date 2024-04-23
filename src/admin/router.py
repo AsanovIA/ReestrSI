@@ -1,9 +1,8 @@
 from flask import Blueprint
 
+from src.datasource.router import router as router_datasource
 from src.users.router import router as router_users
-from src.admin.views import (
-    ListObjectView, ChangeObjectView, AddObjectView, DeleteObjectView
-)
+from src.admin.views import IndexView
 
 router = Blueprint(
     'admin',
@@ -12,29 +11,15 @@ router = Blueprint(
     static_folder='static',
     url_prefix='/admin',
 )
+settings = Blueprint('settings', __name__, url_prefix='/settings')
 
-router.register_blueprint(router_users)
+router.register_blueprint(settings)
 
-router.add_url_rule("/<model_name>/",
-                    view_func=ListObjectView.as_view(
-                        name=f"list_{router.name}",
-                        blueprint_name=router.name,
-                    ))
+settings.register_blueprint(router_datasource)
+settings.register_blueprint(router_users)
 
-router.add_url_rule("/<model_name>/<int:pk>/",
-                    view_func=ChangeObjectView.as_view(
-                        name=f"change_{router.name}",
-                        blueprint_name=router.name,
-                    ))
-
-router.add_url_rule("/<model_name>/add/",
-                    view_func=AddObjectView.as_view(
-                        name=f"add_{router.name}",
-                        blueprint_name=router.name,
-                    ))
-
-router.add_url_rule("/<model_name>/<int:pk>/delete/",
-                    view_func=DeleteObjectView.as_view(
-                        name=f"delete_{router.name}",
-                        blueprint_name=router.name,
-                    ))
+settings.add_url_rule("/",
+                      view_func=IndexView.as_view(
+                          name="index",
+                          blueprint_name=settings.name,
+                      ))

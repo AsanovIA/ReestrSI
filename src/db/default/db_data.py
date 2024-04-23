@@ -160,7 +160,7 @@ default_data = {
             'is_service': True,
         },
     ],
-    'Users': [
+    'UserProfile': [
         {
             'username': 'admin',
             'password': '123',

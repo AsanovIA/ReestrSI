@@ -1,4 +1,5 @@
 {% extends 'base_admin.html' %}
+
 {% block extrastyle %}
 {{ super() }}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/forms.css') }}">
@@ -26,7 +27,11 @@
         <div>
             <div class="flex-container">
                 {{ field.label(**field.label_class) }}
-                {{ field }}
+                {% if field.render_kw.readonly %}
+                    <div class="id_{{ field.name }} readonly">{{ field.data }}</div>
+                {% else %}
+                    {{ field }}
+                {% endif %}
             </div>
             {% if field.description %}
             <div class="help">

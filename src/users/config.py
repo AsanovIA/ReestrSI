@@ -1,7 +1,11 @@
 from src.users.models import (
-    Users,
+    UserProfile
 )
 
 app_settings = {
-    'Users'.lower(): Users,
+    'name': 'users',
+    'verbose_name': 'Пользователи',
+    'models': {
+        'UserProfile': UserProfile,
+    }
 }

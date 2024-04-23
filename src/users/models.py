@@ -6,9 +6,9 @@ from sqlalchemy.orm import Mapped, mapped_column
 from src.db.database import Base, BasePK, str_100, created_at
 
 
-class Users(BasePK, Base):
+class UserProfile(BasePK, Base):
     """Пользователь"""
-    __tablename__ = "users"
+    __tablename__ = "userprofile"
 
     username: Mapped[str_100]
     password: Mapped[str]

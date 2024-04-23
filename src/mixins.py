@@ -1,5 +1,5 @@
 import datetime
-from typing import Union
+from typing import Union, List, Tuple
 
 from flask import abort, g, request, render_template
 from flask.views import View
@@ -11,10 +11,12 @@ from wtforms.fields.simple import FileField, MultipleFileField
 
 from src.db.repository import Repository
 from src.utils import (
+    EMPTY_VALUE_DISPLAY,
     FIELDS_EXCLUDE,
     display_for_field,
     display_for_value,
     format_html,
+    get_app_settings,
     get_form_class,
     get_model,
     label_for_field,
@@ -24,12 +26,14 @@ from src.utils import (
 
 
 class SiteMixin(View):
+    blueprint_name = None
     template = None
     model_name = None
     pk = None
     model = None
     form_class_name = None
-    empty_value_display = '-'
+    empty_value_display = EMPTY_VALUE_DISPLAY
+    sidebar = None
 
     def __init__(self, blueprint_name, template=None):
         self.blueprint_name = blueprint_name
@@ -73,6 +77,7 @@ class SiteMixin(View):
     def get_context_data(self, **kwargs):
         context = {
             'title': 'Средства измерения',
+            'sidebar': self.sidebar,
             'perm': {'perm_change': False},
         }
         if 'admin' in request.blueprints:
@@ -99,16 +104,79 @@ class SiteMixin(View):
             },
             {
                 'title': 'Настройки',
-                'url': try_get_url('')
+                'url': try_get_url('admin.settings.index')
             },
         ]
         return main_menu
 
+    @staticmethod
+    def get_app_list(label=None):
+        """Список моделей БД для заглавной страницы и боковой панели"""
+        from src.utils import SETTINGS_APP_LIST
+
+        app_list = []
+        settings_app_list = SETTINGS_APP_LIST
+
+        if label:
+            settings_app_list = [label]
+
+        for app_label in settings_app_list:
+            app_settings = get_app_settings(app_label)
+            model_list = []
+            for model_name, model in app_settings['models'].items():
+                kwargs = {'model_name': model_name}
+                model_dict = {
+                    'name': model_name,
+                    'vnp': model.Meta.verbose_name_plural,
+                    'list_url': try_get_url(
+                        f'admin.settings.{app_label}.list_{app_label}',
+                        **kwargs,
+                    ),
+                    'add_url': try_get_url(
+                        f'admin.settings.{app_label}.add_{app_label}',
+                        **kwargs,
+                    ),
+                }
+
+                model_list.append(model_dict)
+
+            model_list.sort(key=lambda x: x["vnp"].lower())
+
+            app_dict = {
+                "name": app_settings.get('verbose_name', app_label),
+                "app_label": app_label,
+                "app_url": try_get_url(f'admin.settings.{app_label}.index'),
+                "models": model_list,
+            }
+            app_list.append(app_dict)
+
+        return app_list
+
+
+class SettingsMixin(SiteMixin):
+    sidebar = 'menu_sidebar'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['app_list'] = self.get_app_list()
+
+        return context
+
+
+class IndexMixin(SiteMixin):
+    template = 'index.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['app_list'] = self.get_app_list(self.blueprint_name)
+
+        return context
+
 
 class ListMixin(SiteMixin):
     template: str = 'list_result.html'
-    fields_display: Union[list[str], tuple[str]] = ()
-    fields_link: Union[list[str], tuple[str], None] = ()
+    fields_display: Union[List[str], Tuple[str]] = ()
+    fields_link: Union[List[str], Tuple[str], None] = ()
 
     def g_init(self):
         super().g_init()
@@ -238,7 +306,7 @@ class FormMixin(SiteMixin):
         super().g_init()
         g.object = self.get_object()    
 
-    def get_context_data(self, **kwargs) -> dict:
+    def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['form'] = self.get_form()
 
@@ -289,7 +357,7 @@ class FormMixin(SiteMixin):
 class ChangeMixin(FormMixin):
     def get_object(self):
         try:
-            return  Repository.task_get_object(filters=self.pk)
+            return Repository.task_get_object(filters=self.pk)
         except NoResultFound:
             abort(404)
 

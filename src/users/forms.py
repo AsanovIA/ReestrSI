@@ -8,7 +8,7 @@ from wtforms.fields.simple import (
 from wtforms.validators import Length, Email, Optional, DataRequired
 
 
-class UsersForm(FlaskForm):
+class UserProfileForm(FlaskForm):
     username = StringField(
         label='Логин',
         validators=[DataRequired(), Length(max=100)],

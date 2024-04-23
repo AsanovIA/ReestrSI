@@ -1,7 +1,7 @@
 from src.mixins import (
     SettingsMixin, IndexMixin, ListMixin, ChangeMixin, AddMixin, DeleteMixin
 )
-from src.users.models import *
+from src.datasource.models import *
 
 
 class IndexView(IndexMixin):

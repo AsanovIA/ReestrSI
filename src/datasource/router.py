@@ -1,11 +1,11 @@
 from flask import Blueprint
 
-from src.users.views import (
+from src.datasource.views import (
     IndexView, ListObjectView, ChangeObjectView, AddObjectView,
     DeleteObjectView
 )
 
-router = Blueprint('users', __name__, url_prefix='/users')
+router = Blueprint('datasource', __name__, url_prefix='/datasource')
 
 router.add_url_rule("/",
                     view_func=IndexView.as_view(

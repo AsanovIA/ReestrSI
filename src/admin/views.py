@@ -1,18 +1,11 @@
-from src.mixins import ListMixin, ChangeMixin, AddMixin, DeleteMixin
-from src.admin.models import *
+from src.mixins import SiteMixin
 
 
-class ListObjectView(ListMixin):
-    pass
+class IndexView(SiteMixin):
+    template = 'index.html'
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['app_list'] = self.get_app_list()
 
-class ChangeObjectView(ChangeMixin):
-    pass
-
-
-class AddObjectView(AddMixin):
-    pass
-
-
-class DeleteObjectView(DeleteMixin):
-    pass
+        return context

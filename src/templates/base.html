@@ -7,8 +7,8 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
 {% block sidebar_style %}
     {% if sidebar %}
-    {#<link rel="stylesheet" href="{{ url_for('static', filename='css/nav_sidebar.css') }}">#}
-    {#<script src="{{ url_for('static', filename='js/nav_sidebar.js') }}" defer></script>#}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/nav_sidebar.css') }}">
+    <script src="{{ url_for('static', filename='js/nav_sidebar.js') }}" defer></script>
     {% endif %}
 {% endblock sidebar_style %}
 {% block extrastyle %}{% endblock extrastyle %}
