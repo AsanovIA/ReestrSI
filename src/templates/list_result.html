@@ -2,6 +2,7 @@
 {% block extrastyle %}
 {{ super() }}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/changelists.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/paginator.css') }}">
 {% endblock extrastyle %}
 {% block content %}
 <div id="content-main">
@@ -12,6 +13,8 @@
                 {% if content_title %}<h1>{{ content_title }}</h1>{% endif %}
                 {% block header_change_list %}{% endblock %}
                 <div class="results">
+                    {{ pagination.info }}
+                    {{ pagination.links }}
                     <table id="result_list">
                         <thead>
                             <tr>
@@ -29,6 +32,7 @@
                             {% endfor %}
                         </tbody>
                     </table>
+                    {{ pagination.links }}
                 </div>
             </form>
         </div>

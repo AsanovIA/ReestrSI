@@ -58,6 +58,14 @@ class Repository:
                 session.commit()
 
     @classmethod
+    def task_count(cls, model=None):
+        model = model or g.model
+        with session_factory() as session:
+            result = session.query(model).count()
+
+        return result
+
+    @classmethod
     def task_exists(cls, filters, model=None):
         model = model or g.model
         with session_factory() as session:
@@ -72,6 +80,8 @@ class Repository:
             model=None,
             filters: Union[list, tuple, None] = None,
             ordering: tuple = (),
+            limit: int = 20,
+            offset: int = 0,
             **kwargs,
     ):
         model = model or g.model
@@ -86,6 +96,7 @@ class Repository:
 
             options_load = get_options_load(model)
             query = query.options(*options_load)
+            query = query.offset(offset).limit(limit)
             result_query = session.execute(query)
             result = result_query.unique().scalars().all()
 

@@ -3,6 +3,7 @@ from typing import Union, List, Tuple
 
 from flask import abort, g, redirect, request, render_template
 from flask.views import View
+from flask_paginate import Pagination, get_page_parameter
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Relationship
 from werkzeug.routing import BuildError
@@ -184,6 +185,7 @@ class ListMixin(SiteMixin):
     template: str = 'list_result.html'
     fields_display: Union[List[str], Tuple[str]] = ()
     fields_link: Union[List[str], Tuple[str], None] = ()
+    per_page: int = 20
 
     def g_init(self):
         super().g_init()
@@ -214,12 +216,36 @@ class ListMixin(SiteMixin):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        result_list = Repository.task_get_list(**kwargs)
+        page = request.args.get(get_page_parameter(), type=int, default=1)
+        per_page = self.per_page
+        offset = (page - 1) * per_page
+        filters = {'limit': per_page, 'offset': offset}
+        result_list = Repository.task_get_list(**filters)
+        context['pagination'] = self.get_paginator(
+            page=page, per_page=per_page
+        )
         context['result_headers'] = list(self.get_result_headers())
         context['results'] = list(self.get_results(result_list))
         context['add_url'] = self.get_add_url()
+        try:
+            context['title'] = g.model.Meta.verbose_name_plural
+        except AttributeError:
+            pass
 
         return context
+
+    @classmethod
+    def get_paginator(cls, page: int, per_page: int) -> Pagination:
+        total = Repository.task_count()
+        return Pagination(
+            page=page,
+            per_page=per_page,
+            total=total,
+            display_msg="показано <b>{start} - {end}</b> записей из"
+                        " <b>{total}</b>",
+            search_msg='',
+            css_framework='bootstrap5',
+        )
 
     @staticmethod
     def get_result_headers():
@@ -330,6 +356,10 @@ class FormMixin(SiteMixin):
         context = super().get_context_data(**kwargs)
         if 'form' not in context:
             context['form'] = self.get_form()
+        try:
+            context['title'] = g.model.Meta.verbose_name
+        except AttributeError:
+            pass
 
         return context
 
