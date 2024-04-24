@@ -15,7 +15,7 @@ class UserProfile(BasePK, Base):
     last_name: Mapped[str_100]
     first_name: Mapped[str_100]
     middle_name: Mapped[str_100]
-    email: Mapped[Optional[str]]
+    email: Mapped[Optional[str]] = mapped_column(unique=True)
     is_active: Mapped[bool] = mapped_column(default=True)
     date_joined: Mapped[created_at] = mapped_column(doc='Дата регистрации')
 

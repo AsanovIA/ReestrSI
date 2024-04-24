@@ -17,7 +17,7 @@ class ChangeObjectView(SettingsMixin, ChangeMixin):
 
 
 class AddObjectView(SettingsMixin, AddMixin):
-    pass
+    form_class_name = 'AddUserForm'
 
 
 class DeleteObjectView(SettingsMixin, DeleteMixin):

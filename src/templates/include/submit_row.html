@@ -1,0 +1,44 @@
+{% if btn and perm.perm_change %}
+<div class="submit-row">
+
+    {% if btn.btn_save %}
+    {# Сохранить объект и перенаправить #}
+    <input type="submit" name="_save" class="default" value="Сохранить">
+    {% endif %}
+
+    {% if btn.btn_save_and_continue %}
+    {# Сохранить объект и остаться на страницы изменения объекта #}
+    <input type="submit" name="_continue" class="default" value="Сохранить и продолжить редактирование">
+    {% endif %}
+
+    {% if btn.btn_change %}
+    {# Настраиваемая кнопка изменения объекта #}
+    <input type="submit" name="_change" class="default" value="{{ btn.btn_text }}">
+    {% endif %}
+
+    {% if btn.btn_log %}
+    {# Перенаправление на страницу лога изменений объекта #}
+    <a href="{{ log_url }}" class="history">история изменений</a>
+    {% endif %}
+
+    {% if btn.btn_history %}
+    {# Перенаправление на страницу истории обслужтвания объекта #}
+    <a href="{{ history_url }}" class="history">история обслуживания</a>
+    {% endif %}
+
+    {% if btn.btn_service %}
+    {# Перевести СИ в сервис или посмотреть на СИ в сервисе #}
+    <a href="{{ service_url }}" class="{% if class_link %}{{ class_link }}{% else %}addlink{% endif %}">{{ link_text }}</a>
+    {% endif %}
+
+    {% if perm.perm_add and btn.btn_add %}
+    {# Перенаправление на страницу добавления объекта #}
+    <a href="{{ add_url }}" class="addlink">добавить {{ object_verbose_name|lower }}</a>
+    {% endif %}
+
+    {% if perm.perm_delete and btn.btn_delete %}
+    <a href="{{ delete_url }}" class="deletelink">удалить {{ object_verbose_name|lower }}</a>
+    {% endif %}
+
+</div>
+{% endif %}

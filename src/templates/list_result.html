@@ -8,10 +8,7 @@
     <div id="changelist" class="module">
         <div class="changelist-form-container">
             <form id="changelist-form" method="post" novalidate>
-                {% if btn %}
                 {% include 'include/submit_row.html' %}
-                {% endif %}
-
                 {% if content_title %}<h1>{{ content_title }}</h1>{% endif %}
                 {% block header_change_list %}{% endblock %}
                 <div class="results">

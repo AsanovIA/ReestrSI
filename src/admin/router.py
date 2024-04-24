@@ -1,4 +1,4 @@
-from flask import Blueprint
+from flask import Blueprint, redirect, url_for
 
 from src.datasource.router import router as router_datasource
 from src.users.router import router as router_users
@@ -23,3 +23,8 @@ settings.add_url_rule("/",
                           name="index",
                           blueprint_name=settings.name,
                       ))
+
+
+@router.route('/')
+def index():
+    return redirect(url_for('admin.settings.index'))

@@ -12,6 +12,7 @@ class BaseName(BasePK):
 
     class Meta:
         fields_display = ['name']
+        ordering = ('name',)
 
     def __str__(self):
         return str(self.name)
@@ -138,9 +139,8 @@ class Employee(BasePK, Base):
         verbose_name = 'Ответственное лицо'
         verbose_name_plural = 'Ответственные лица'
         select_related = ['division']
-        fields_display = [
-            'last_name', 'first_name', 'middle_name', 'email', 'division'
-        ]
+        fields_display = ['__str__', 'email', 'division']
+        ordering = ('last_name', 'first_name', 'middle_name')
 
     def get_full_name(self):
         # Формирование полного имени "Фамилия Имя Отчество"
@@ -183,7 +183,7 @@ class Si(BasePK, Base):
     type_si_id: Mapped[int] = mapped_column(
         ForeignKey("type_si.id", ondelete="CASCADE")
     )
-    number: Mapped[str] = mapped_column(unique=True)
+    number: Mapped[str]
     description_method_id: Mapped[int] = mapped_column(
         ForeignKey("description_method.id", ondelete="CASCADE")
     )
@@ -214,7 +214,7 @@ class Si(BasePK, Base):
     )
     date_last_service: Mapped[Optional[datetime.date]]
     date_next_service: Mapped[datetime.date]
-    certificate: Mapped[Optional[str_256]]
+    certificate: Mapped[Optional[str]]
     is_service: Mapped[bool] = mapped_column(default=False)
 
     group_si: Mapped["GroupSi"] = relationship(back_populates="si")

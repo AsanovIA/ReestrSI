@@ -1,4 +1,3 @@
-from flask_wtf import FlaskForm
 from wtforms import (
     StringField, FileField, EmailField, SelectField, DateField, IntegerField,
     BooleanField
@@ -7,11 +6,14 @@ from wtforms.validators import (
     Length, Email, InputRequired, Optional, DataRequired, NumberRange
 )
 
+from src.forms import SiteForm
+from src.validators import Unique
 
-class FieldNameForm(FlaskForm):
+
+class FieldNameForm(SiteForm):
     name = StringField(
         label='Наименование',
-        validators=[InputRequired(), Length(max=256)],
+        validators=[InputRequired(), Length(max=256), Unique()],
         description='максимум 256 символов'
     )
 
@@ -55,7 +57,7 @@ class DivisionForm(FieldNameForm):
     """Подразделение"""
 
 
-class EmployeeForm(FlaskForm):
+class EmployeeForm(SiteForm):
     """Ответственное лицо (сотрудник)"""
 
     last_name = StringField(
@@ -75,7 +77,11 @@ class EmployeeForm(FlaskForm):
     )
     email = EmailField(
         label='e-mail',
-        validators=[Optional(), Email()]
+        validators=[
+            Optional(),
+            Email(),
+            Unique(message='Сотрудник с таким e-mail уже существует')
+        ]
     )
     division = SelectField(
         label='Подразделение',
@@ -84,7 +90,7 @@ class EmployeeForm(FlaskForm):
     )
 
 
-class SiForm(FlaskForm):
+class SiForm(SiteForm):
     """Средство измерения"""
 
     group_si = SelectField(
@@ -134,16 +140,12 @@ class SiForm(FlaskForm):
     )
     year_production = IntegerField(
         label='год производства',
-        validators=[NumberRange(
-            min=1900,
-            max=2200,
-            message='год должен быть в диапазоне от %(min)s до %(max)s.')]
+        validators=[NumberRange(min=1900, max=2200)],
+        description='диапазон от 1900 до 2200',
     )
     nomenclature = StringField(
         label='Номенклатурный номер',
-        validators=[
-            Length(max=100)
-        ],
+        validators=[Length(max=100)],
         description='максимум 100 символов'
     )
     room_use_etalon = SelectField(
@@ -178,11 +180,7 @@ class SiForm(FlaskForm):
         label='Дата следующей поверки',
         validators=[DataRequired()]
     )
-    certificate = StringField(
-        label='Сертификат',
-        validators=[Length(max=100)],
-        description='максимум 100 символов'
-    )
+    certificate = FileField(label='Сертификат')
     is_service = BooleanField(
         label='на обслуживании',
         default=False

@@ -11,7 +11,7 @@
     <form {% if form.is_multipart %} enctype="multipart/form-data"{% endif %}
           method="post" id="{{ model_name }}_form" novalidate>{{ form.hidden_tag() }}
         <div>
-            {#{% include 'include/submit_row.html' %}#}
+            {% include 'include/submit_row.html' %}
             {% if content_title %}<h2>{{ content_title }}</h2>{% endif %}
 
             {% if form.errors %}
@@ -21,7 +21,7 @@
 <fieldset class="module aligned">
     {% for field in form if field.name in form.fields %}
     <div class="form-row{% if field.errors %} errors{% endif %}{% if field.name %} field-{{ field.name }}{% endif %}">
-        {% if field.errors %}
+        {% if field.errors and not field.render_kw.readonly %}
             <ul class="errorlist">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul>
         {% endif %}
         <div>

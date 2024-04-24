@@ -2,13 +2,13 @@ from flask import g
 from collections.abc import Iterable
 from typing import Union
 
-from sqlalchemy import select, insert, delete
+from sqlalchemy import select, insert, delete, desc
 from sqlalchemy.orm import joinedload
 
 from src.db.database import Base, engine, session_factory
 
 
-def _get_options_load(model):
+def get_options_load(model):
     def get_related_model():
         try:
             select_related = model.Meta.select_related
@@ -18,6 +18,28 @@ def _get_options_load(model):
             yield joinedload(getattr(model, rel))
 
     return list(get_related_model())
+
+
+def get_ordering(model):
+    try:
+        fields = getattr(model.Meta, 'ordering')
+    except AttributeError:
+        return ()
+
+    def create_ordering():
+        for field in fields:
+            asc_desc = True
+            if field.startswith("-"):
+                asc_desc = False
+                field = field[1:]
+            if not hasattr(model, field):
+                continue
+            if asc_desc:
+                yield getattr(model, field)
+            else:
+                yield desc(getattr(model, field))
+
+    return tuple(create_ordering())
 
 
 class Repository:
@@ -36,19 +58,33 @@ class Repository:
                 session.commit()
 
     @classmethod
+    def task_exists(cls, filters, model=None):
+        model = model or g.model
+        with session_factory() as session:
+            subq = session.query(model).filter(*filters)
+            result = session.query(subq.exists()).scalar()
+
+        return result
+
+    @classmethod
     def task_get_list(
             cls,
             model=None,
             filters: Union[list, tuple, None] = None,
+            ordering: tuple = (),
             **kwargs,
     ):
         model = model or g.model
+        ordering = ordering or get_ordering(model)
 
         with session_factory() as session:
             query = select(model)
             if filters and isinstance(filters, Iterable):
                 query = select(model).filter(*filters)
-            options_load = _get_options_load(model)
+            if ordering:
+                query = query.order_by(*ordering)
+
+            options_load = get_options_load(model)
             query = query.options(*options_load)
             result_query = session.execute(query)
             result = result_query.unique().scalars().all()
@@ -73,11 +109,25 @@ class Repository:
 
         with session_factory() as session:
             query = select(model).filter_by(**filters)
-            options_load = _get_options_load(model)
+            options_load = get_options_load(model)
             query = query.options(*options_load)
             result = session.execute(query).scalar_one()
 
         return result
+
+    @classmethod
+    def task_update_object(cls, obj):
+        with session_factory() as session:
+            session.add(obj)
+            session.commit()
+
+    @classmethod
+    def task_add_object(cls, obj):
+        with session_factory() as session:
+            session.add(obj)
+            session.flush()
+            session.commit()
+            g.object_id = obj.id
 
     @classmethod
     def task_add_or_update_object(cls, obj):

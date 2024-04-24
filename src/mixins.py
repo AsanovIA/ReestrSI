@@ -1,18 +1,16 @@
 import datetime
 from typing import Union, List, Tuple
 
-from flask import abort, g, request, render_template
+from flask import abort, g, redirect, request, render_template
 from flask.views import View
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Relationship
 from werkzeug.routing import BuildError
-from wtforms.fields.choices import SelectField
-from wtforms.fields.simple import FileField, MultipleFileField
 
+from src.config import settings
 from src.db.repository import Repository
 from src.utils import (
     EMPTY_VALUE_DISPLAY,
-    FIELDS_EXCLUDE,
     display_for_field,
     display_for_value,
     format_html,
@@ -74,18 +72,27 @@ class SiteMixin(View):
             f"не определен метод post() для {self.__class__.__name__}"
         )
 
+    def get_btn(self):
+        return {}
+
     def get_context_data(self, **kwargs):
         context = {
-            'title': 'Средства измерения',
+            'title': settings.SITE_NAME,
             'sidebar': self.sidebar,
             'perm': {'perm_change': False},
         }
         if 'admin' in request.blueprints:
+            try:
+                object_verbose_name = g.model.Meta.verbose_name
+            except AttributeError:
+                object_verbose_name = ''
             context.update({
                 'main_menu': self.get_admin_main_menu(),
                 'perm': {
                     'perm_add': True, 'perm_delete': True, 'perm_change': True,
                 },
+                'btn': self.get_btn(),
+                'object_verbose_name': object_verbose_name,
             })
         kwargs.update(context)
 
@@ -197,11 +204,20 @@ class ListMixin(SiteMixin):
 
         g.form = get_form_class()()
 
+    def get_btn(self):
+        return {'btn_add': True}
+
+    def get_add_url(self):
+        return try_get_url(
+            f'.add_{self.blueprint_name}', model_name=self.model_name
+        )
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         result_list = Repository.task_get_list(**kwargs)
         context['result_headers'] = list(self.get_result_headers())
         context['results'] = list(self.get_results(result_list))
+        context['add_url'] = self.get_add_url()
 
         return context
 
@@ -301,70 +317,84 @@ class ListMixin(SiteMixin):
 
 class FormMixin(SiteMixin):
     template: str = 'form_result.html'
-    
+    methods = ["GET", "POST"]
+
     def g_init(self):
         super().g_init()
-        g.object = self.get_object()    
+        g.object = self.get_object()
+
+    def get_btn(self):
+        return {'btn_save': True, 'btn_save_and_continue': True}
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['form'] = self.get_form()
+        if 'form' not in context:
+            context['form'] = self.get_form()
 
         return context
 
-    def get_form(self):
-        form = get_form_class()(obj=g.object)
-        instance = getattr(g, 'object', None)
-        g.form = form
-        form.fields = []
-        for field in form:
-            if field.name not in FIELDS_EXCLUDE:
-                form.fields.append(field.name)
-            label_class = {}
-            if getattr(field.flags, 'required', None):
-                label_class = {'class': 'required'}
-            field.label_class = label_class
-            if isinstance(field, (FileField, MultipleFileField)):
-                form.is_multipart = True
-            if isinstance(field, SelectField):
-                model_name = field.render_kw.pop('model')
-                if model_name is None:
-                    raise TypeError(
-                        f'Отсутствует ключ "model" параметра "render_kw" для '
-                        f'{field.name} класса {form.__class__.__name__}'
-                    )
-                model_related = get_model(model_name)
-                kwargs = {'model': model_related}
-                choices = [
-                    (obj.id, obj)
-                    for obj in Repository.task_get_list(**kwargs)
-                ]
-                setattr(field, 'choices', choices)
+    def get_form_kwargs(self):
+        kwargs = {
+            'meta': {'locales': [settings.LANGUAGE]},
+            'obj': g.object,
+        }
+        return kwargs
 
-                value = form.data[field.name]
-                if value is None:
-                    value = getattr(instance, f'{field.name}_id', None)
-                setattr(field, 'data', value)
+    def get_form(self):
+        form = get_form_class()(**self.get_form_kwargs())
+        g.form = form
 
         return form
 
-    def get_object(self):
-        raise NotImplementedError(
-            f"не определен метод get_object() для {self.__class__.__name__}"
-        )
-
-
-class ChangeMixin(FormMixin):
     def get_object(self):
         try:
             return Repository.task_get_object(filters=self.pk)
         except NoResultFound:
             abort(404)
 
+    def get_success_url(self):
+        return try_get_url(
+            f'.list_{self.blueprint_name}', model_name=self.model_name
+        )
+
+    def get_success_continue_url(self):
+        return request.url
+
+    def object_save(self, obj):
+        Repository.task_update_object(obj)
+
+    def post(self, **kwargs):
+        form = self.get_form()
+        if form.validate_on_submit():
+            obj = form.instance
+            self.object_save(obj)
+
+            if "_continue" in request.form:
+                return redirect(self.get_success_continue_url())
+            return redirect(self.get_success_url())
+
+        else:
+            kwargs['form'] = form
+            return self.get(**kwargs)
+
+
+class ChangeMixin(FormMixin):
+    pass
+
 
 class AddMixin(FormMixin):
     def get_object(self):
-        return None
+        return g.model()
+
+    def get_success_continue_url(self):
+        return try_get_url(
+            f'.change_{self.blueprint_name}',
+            model_name=self.model_name,
+            pk=g.object_id
+        )
+
+    def object_save(self, obj):
+        Repository.task_add_object(obj)
 
 
 class DeleteMixin(SiteMixin):

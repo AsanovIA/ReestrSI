@@ -6,6 +6,6 @@ app_settings = {
     'name': 'users',
     'verbose_name': 'Пользователи',
     'models': {
-        'UserProfile': UserProfile,
+        'UserProfile'.lower(): UserProfile,
     }
 }

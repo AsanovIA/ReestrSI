@@ -4,10 +4,10 @@ from sqlalchemy import create_engine, func, String, text
 from sqlalchemy.orm import sessionmaker, DeclarativeBase, Mapped, mapped_column
 from typing_extensions import Annotated
 
-from src.config import NAMESUBD, DATABASE_URL
+from src.config import settings, NAMESUBD
 
 engine = create_engine(
-    url=DATABASE_URL,
+    url=settings.DATABASE_URL,
     echo=True,
 )
 

@@ -1,5 +1,7 @@
 import datetime
 
+from werkzeug.security import generate_password_hash
+
 default_data = {
     'GroupSi': [
         {'name': 'Радиотехнические и радиоэлектронные измерения'},
@@ -163,7 +165,7 @@ default_data = {
     'UserProfile': [
         {
             'username': 'admin',
-            'password': '123',
+            'password': generate_password_hash('123'),
             'last_name': 'фамилия админа',
             'first_name': 'Имя админа',
             'middle_name': 'Отчество админа',
@@ -172,7 +174,7 @@ default_data = {
         },
         {
             'username': 'user',
-            'password': '123',
+            'password': generate_password_hash('123'),
             'last_name': 'фамилия юзера',
             'first_name': 'Имя юзера',
             'middle_name': 'Отчество юзера',

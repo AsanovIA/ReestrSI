@@ -6,8 +6,9 @@ from sqlalchemy import Boolean
 from sqlalchemy.orm import InstrumentedAttribute
 from werkzeug.routing import BuildError
 
-from src.config import APPS
+from src.config import settings
 
+BLANK_CHOICE = [(0, '---------')]
 EMPTY_VALUE_DISPLAY = '-'
 FIELDS_EXCLUDE = ['csrf_token']
 SETTINGS_APP_LIST = [
@@ -33,7 +34,7 @@ def get_app_settings(app_name: str):
 
 
 def get_model(model_name: str):
-    for app_name in APPS:
+    for app_name in settings.APPS:
         try:
             app_settings = get_app_settings(app_name)
             model = app_settings['models'].get(model_name.lower())
@@ -48,7 +49,7 @@ def get_model(model_name: str):
 def get_form_class(model=None):
     model = model or g.model
     form_class_name = g.form_class_name or model.__name__ + "Form"
-    for app_name in APPS:
+    for app_name in settings.APPS:
         try:
             module = import_module(f'{app_name}.forms')
             form_class = getattr(module, form_class_name)

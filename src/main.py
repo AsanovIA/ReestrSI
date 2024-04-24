@@ -10,6 +10,7 @@ app = Flask(__name__)
 
 app.register_blueprint(router_admin)
 app.config['SECRET_KEY'] = 'secret_key'
+app.config['WTF_I18N_ENABLED'] = False
 
 
 if __name__ == "__main__":
