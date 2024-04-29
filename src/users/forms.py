@@ -153,3 +153,29 @@ class AddUserForm(SiteForm):
             self.password.errors.extend(e.args[0])
             return False
         return success
+
+
+class AdminPasswordChangeForm(SiteForm):
+    password = PasswordField(
+        label='Пароль',
+        validators=[
+            InputRequired(),
+            EqualTo(fieldname='password2', message='Пароли не совпадают'),
+        ],
+        description=password_validation.password_validators_description_html(),
+    )
+    password2 = PasswordField(
+        label='Подтверждение пароля',
+        validators=[InputRequired()],
+        description='Для подтверждения введите, пожалуйста, пароль ещё раз.'
+    )
+
+    def post_validate(self):
+        success = super().post_validate()
+        password = self.data.get('password')
+        try:
+            password_validation.validate_password(password, self.instance)
+        except ValidationError as e:
+            self.password.errors.extend(e.args[0])
+            return False
+        return success

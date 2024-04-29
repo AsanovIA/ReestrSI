@@ -2,7 +2,7 @@ from flask import Blueprint
 
 from src.users.views import (
     IndexView, ListObjectView, ChangeObjectView, AddObjectView,
-    DeleteObjectView
+    DeleteObjectView, AdminPasswordChangeView
 )
 
 router = Blueprint('users', __name__, url_prefix='/users')
@@ -34,5 +34,11 @@ router.add_url_rule("/<model_name>/add/",
 router.add_url_rule("/<model_name>/<int:pk>/delete/",
                     view_func=DeleteObjectView.as_view(
                         name=f"delete_{router.name}",
+                        blueprint_name=router.name,
+                    ))
+
+router.add_url_rule("/<model_name>/<int:pk>/password/",
+                    view_func=AdminPasswordChangeView.as_view(
+                        name=f"change_password",
                         blueprint_name=router.name,
                     ))

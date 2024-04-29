@@ -28,6 +28,9 @@ class UserProfile(BasePK, Base):
     def __repr__(self):
         return self.username
 
+    def __str__(self):
+        return self.get_full_name()
+
     def get_full_name(self):
         # Формирование полного имени "Фамилия Имя Отчество"
         full_name = "%s %s %s" % (self.last_name,

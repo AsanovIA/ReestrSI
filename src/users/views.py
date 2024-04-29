@@ -1,3 +1,4 @@
+from flask import g
 from src.mixins import (
     SettingsMixin, IndexMixin, ListMixin, ChangeMixin, AddMixin, DeleteMixin
 )
@@ -22,3 +23,16 @@ class AddObjectView(SettingsMixin, AddMixin):
 
 class DeleteObjectView(SettingsMixin, DeleteMixin):
     pass
+
+
+class AdminPasswordChangeView(SettingsMixin, ChangeMixin):
+    form_class_name = 'AdminPasswordChangeForm'
+    template = 'password_set.html'
+
+    def get_btn(self):
+        return {'btn_change': True, 'btn_text': 'Изменить пароль'}
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['username'] = str(g.object)
+        return context
