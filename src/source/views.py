@@ -3,7 +3,7 @@ from flask.views import View
 from sqlalchemy.exc import NoResultFound
 
 from src.db.repository import Repository
-from src.utils import get_model, EMPTY_VALUE_DISPLAY
+from src.core.utils import get_model, EMPTY_VALUE_DISPLAY
 
 
 class ValueChangeView(View):

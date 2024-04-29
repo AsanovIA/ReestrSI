@@ -10,7 +10,8 @@ from werkzeug.routing import BuildError
 
 from src.config import settings
 from src.db.repository import Repository
-from src.utils import (
+from src.core.media import Media
+from src.core.utils import (
     EMPTY_VALUE_DISPLAY,
     display_for_field,
     display_for_value,
@@ -21,7 +22,6 @@ from src.utils import (
     label_for_field,
     lookup_field,
     try_get_url,
-    Media,
 )
 
 
@@ -127,7 +127,7 @@ class SiteMixin(View):
     @staticmethod
     def get_app_list(label=None):
         """Список моделей БД для заглавной страницы и боковой панели"""
-        from src.utils import SETTINGS_APP_LIST
+        from src.core.utils import SETTINGS_APP_LIST
 
         app_list = []
         settings_app_list = SETTINGS_APP_LIST

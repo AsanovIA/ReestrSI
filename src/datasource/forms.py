@@ -1,8 +1,7 @@
 from wtforms import StringField, FileField, EmailField, SelectField
 from wtforms.validators import Length, Email, InputRequired, Optional
 
-from src.forms import SiteForm
-from src.validators import Unique
+from src.core import SiteForm, Unique
 
 
 class FieldNameForm(SiteForm):

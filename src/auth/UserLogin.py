@@ -2,7 +2,7 @@ from flask_login import UserMixin
 from flask import g
 
 from src.db.repository import Repository
-from src.utils import get_model
+from src.core.utils import get_model
 
 
 class UserLogin(UserMixin):

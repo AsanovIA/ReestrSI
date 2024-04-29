@@ -6,9 +6,7 @@ from wtforms.validators import Length, Email, Optional, DataRequired, \
     EqualTo, InputRequired, ValidationError
 
 from src.auth import password_validation
-from src.forms import SiteForm
-from src.validators import Unique
-from src.widgets import DivWidget
+from src.core import DivWidget, SiteForm, Unique
 
 
 class ReadOnlyPasswordHashWidget(DivWidget):

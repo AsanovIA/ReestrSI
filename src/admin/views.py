@@ -1,4 +1,4 @@
-from src.mixins import SiteMixin
+from src.core.mixins import SiteMixin
 
 
 class IndexView(SiteMixin):

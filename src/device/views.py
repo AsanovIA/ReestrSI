@@ -1,4 +1,4 @@
-from src.mixins import ListMixin
+from src.core.mixins import ListMixin
 
 
 class ListObjectView(ListMixin):

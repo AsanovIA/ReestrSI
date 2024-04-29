@@ -2,9 +2,9 @@ from flask import g
 from sqlalchemy.exc import NoResultFound
 
 from src.db.repository import Repository
-from src.mixins import ListMixin, ChangeMixin, AddMixin
+from src.core.mixins import ListMixin, ChangeMixin, AddMixin
+from src.core.utils import get_model, try_get_url
 from src.service.models import *
-from src.utils import get_model, try_get_url
 
 
 class SiMixin:

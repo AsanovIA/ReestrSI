@@ -3,7 +3,7 @@ from flask_wtf import FlaskForm
 from wtforms.fields.choices import SelectField
 
 from src.db.repository import Repository
-from src.utils import FIELDS_EXCLUDE, BLANK_CHOICE, get_model
+from src.core.utils import FIELDS_EXCLUDE, BLANK_CHOICE, get_model
 
 
 class SiteForm(FlaskForm):
@@ -47,7 +47,7 @@ class SiteForm(FlaskForm):
 
     def contents(self, field):
         from sqlalchemy.orm import Relationship
-        from src.utils import (
+        from src.core.utils import (
             boolean_icon, lookup_field, display_for_field, EMPTY_VALUE_DISPLAY
         )
 
@@ -71,7 +71,9 @@ class SiteForm(FlaskForm):
                 ):
                     result_repr = str(value)
                 else:
-                    result_repr = display_for_field(value, f.type, EMPTY_VALUE_DISPLAY)
+                    result_repr = display_for_field(
+                        value, f.type, EMPTY_VALUE_DISPLAY
+                    )
 
         return result_repr
 

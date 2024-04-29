@@ -2,7 +2,7 @@ from wtforms import (SelectField, DateField, IntegerField, StringField,
                      BooleanField, TextAreaField, FileField)
 from wtforms.validators import Length, NumberRange, Optional, DataRequired
 
-from src.forms import SiteForm
+from src.core.forms import SiteForm
 
 
 class SiForm(SiteForm):

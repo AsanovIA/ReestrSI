@@ -8,7 +8,7 @@ from difflib import SequenceMatcher
 from pathlib import Path
 
 from src.config import settings
-from src.utils import format_html, get_suffix, label_for_field
+from src.core.utils import format_html, get_suffix, label_for_field
 
 
 def get_default_password_validators():

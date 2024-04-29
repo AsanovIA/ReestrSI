@@ -1,6 +1,6 @@
 from src.db.default.db_data import default_data
 from src.db.repository import Repository
-from src.utils import get_model
+from src.core.utils import get_model
 
 
 def set_default_db():

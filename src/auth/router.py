@@ -6,7 +6,7 @@ from werkzeug.security import check_password_hash
 from src.auth.forms import LoginForm
 from src.auth.UserLogin import UserLogin
 from src.db.repository import Repository
-from src.utils import get_model
+from src.core.utils import get_model
 
 router = Blueprint('auth', __name__, url_prefix='/account')
 
