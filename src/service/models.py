@@ -117,7 +117,7 @@ class Si(BasePK, Base):
 
 
 class Service(BasePK, Base):
-    """Сервис"""
+    """Сервис - обслуживание средств измерения"""
     __tablename__ = "service"
 
     si_id: Mapped[int] = mapped_column(

@@ -10,6 +10,8 @@ class SiteForm(FlaskForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         instance = getattr(g, 'object', None)
+        if instance is None:
+            return
         self.fields = []
         for field in self:
             if field.name not in FIELDS_EXCLUDE:
@@ -74,10 +76,16 @@ class SiteForm(FlaskForm):
         return result_repr
 
     def validate(self, extra_validators=None):
-        success = super().validate(extra_validators)
+        validate = super().validate(extra_validators)
+        if not validate:
+            return validate
         self.instance = self.update_instance()
+        post_validate = self.post_validate()
 
-        return success
+        return validate and post_validate
+
+    def post_validate(self):
+        return True
 
     def update_instance(self):
         model = g.model

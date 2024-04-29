@@ -2,7 +2,6 @@ from typing import Optional
 
 from sqlalchemy.orm import Mapped, mapped_column
 
-
 from src.db.database import Base, BasePK, str_100, created_at
 
 

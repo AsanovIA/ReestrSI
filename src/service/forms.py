@@ -102,12 +102,6 @@ class SiForm(SiteForm):
 class ServiceForm(SiteForm):
     """Обслуживание СИ"""
 
-    # si = SelectField(
-    #     label='Средство измерения',
-    #     coerce=int,
-    #     validate_choice=False,
-    #     render_kw={'model': 'Si', 'readonly': True},
-    # )
     date_in_service = DateField(
         label='Дата поступления на обслуживание',
         render_kw={'readonly': True},
@@ -132,9 +126,6 @@ class ServiceForm(SiteForm):
         validators=[Length(max=1000)],
         description='максимум 1000 символов'
     )
-
-    class Meta:
-        exclude = ['si']
 
 
 class AddServiceForm(SiteForm):

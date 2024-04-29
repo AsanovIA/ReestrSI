@@ -238,3 +238,15 @@ def format_html(format_string, *args, **kwargs):
     args_safe = map(Markup.escape, args)
     kwargs_safe = {k: Markup.escape(v) for (k, v) in kwargs.items()}
     return Markup(format_string.format(*args_safe, **kwargs_safe))
+
+
+def get_suffix(text, n):
+    from src.suffixes import update_suffix
+
+    number = (
+        0 if n % 10 == 1 and n % 100 != 11 else 1
+        if 2 <= n % 10 <= 4 and (n % 100 < 12 or n % 100 > 14) else 2
+    )
+    new_text = update_suffix[(text, number)]
+
+    return new_text

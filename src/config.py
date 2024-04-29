@@ -2,7 +2,6 @@ import os
 from typing import List
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-
 NAMESUBD = 'sqlite'
 # NAMESUBD = 'postgres'
 
@@ -21,6 +20,16 @@ class Settings(BaseSettings):
         'datasource',
         'service',
         'users',
+    ]
+
+    AUTH_PASSWORD_VALIDATORS: List[dict] = [
+        {'NAME': 'src.auth.password_validation.AttributeSimilarityValidator'},
+        {
+            'NAME': 'src.auth.password_validation.MinimumLengthValidator',
+            'OPTIONS': {'min_length': 6},
+        },
+        {'NAME': 'src.auth.password_validation.CommonPasswordValidator'},
+        {'NAME': 'src.auth.password_validation.NumericPasswordValidator'},
     ]
 
     LANGUAGE: str = 'ru'
