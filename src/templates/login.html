@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block sidebar_style %}{% endblock sidebar_style %}
+
+{% block extrastyle %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+    <script src="{{ url_for('static', filename='js/login.js') }}"></script>
+{% endblock extrastyle %}
+
+{% block sidebar %}{% endblock sidebar%}
+{% block bodyclass %}login{% endblock %}
+{% block header %}
+    <!-- Header -->
+    <div id="header">
+        {% block mainmenu %}
+        <div id="branding" class="main-menu">
+            <h1>Войдите в свой аккаунт</h1>
+        </div>
+        {% endblock mainmenu %}
+        {% block usertools %}{% endblock usertools %}
+    </div>
+    <!-- END Header -->
+{% endblock header %}
+{% block content %}
+    {% if form.errors %}
+        {% if form.is_active %}
+        <p class="errornote">Пожалуйста, введите корректные имя пользователя и пароль учётной записи. Оба поля могут быть чувствительны к регистру.</p>
+        {% else %}
+        <p class="errornote">Ваш аккаунт деактивирован.</p>
+        {% endif %}
+    {% endif %}
+
+    <div id="content-main">
+        <form method="post" id="login-form">
+            {{ form.hidden_tag() }}
+            <div class="form-row">
+                {{ form.username.label }} {{ form.username }}
+            </div>
+            <div class="form-row">
+                {{ form.password.label }}
+                <div class="input-group">
+                    {{ form.password }}
+                    <span id="input_password_eye">
+                        {#<i id="toggle-password" class="fa fa-eye-slash"></i>#}
+                    </span>
+                    <input type="hidden" name="next" value="{{ next }}">
+                </div>
+            </div>
+            <div class="submit-row">
+                <input type="submit" value="Войти">
+            </div>
+        </form>
+    </div>
+
+{% endblock content%}
