@@ -1,0 +1,24 @@
+<fieldset class="module aligned">
+{% for field in form if field.name in form.fields %}
+  <div class="form-row{% if field.errors %} errors{% endif %}{% if field.name %} field-{{ field.name }}{% endif %}">
+    {% if field.errors %} {#and not field.is_readonly#}
+      <ul class="errorlist">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+    {% endif %}
+    <div>
+      <div class="flex-container">
+        {{ field.label(**field.label_class) }}
+        {% if field.is_readonly %}
+          <div class="id_{{ field.name }} readonly">{{ form.contents(field) }}</div>
+        {% else %}
+          {{ field }}
+        {% endif %}
+      </div>
+      {% if field.description %}
+      <div class="help">
+        <div>{{ field.description|safe }}</div>
+      </div>
+   {% endif %}
+    </div>
+  </div>
+{% endfor %}
+</fieldset>

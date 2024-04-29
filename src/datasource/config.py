@@ -9,7 +9,6 @@ from src.datasource.models import (
     Room,
     Division,
     Employee,
-    Si,
 )
 
 app_settings = {
@@ -26,6 +25,5 @@ app_settings = {
         'Room'.lower(): Room,
         'Division'.lower(): Division,
         'Employee'.lower(): Employee,
-        'Si'.lower(): Si,
     }
 }

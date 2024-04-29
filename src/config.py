@@ -19,6 +19,7 @@ class Settings(BaseSettings):
 
     APPS: List[str] = [
         'datasource',
+        'service',
         'users',
     ]
 

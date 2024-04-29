@@ -21,6 +21,7 @@ from src.utils import (
     label_for_field,
     lookup_field,
     try_get_url,
+    Media,
 )
 
 
@@ -81,6 +82,7 @@ class SiteMixin(View):
             'title': settings.SITE_NAME,
             'sidebar': self.sidebar,
             'perm': {'perm_change': False},
+            'media': self.get_media(),
         }
         if 'admin' in request.blueprints:
             try:
@@ -99,16 +101,21 @@ class SiteMixin(View):
 
         return kwargs
 
+    def get_media(self):
+        media = Media()
+
+        return media
+
     @classmethod
     def get_admin_main_menu(cls):
         main_menu = [
             {
-                'title': 'Главная',
-                'url': try_get_url('')
+                'title': 'Средства измерения',
+                'url': try_get_url('admin.si.list_si')
             },
             {
                 'title': 'Обслуживание',
-                'url': try_get_url('')
+                'url': try_get_url('admin.service.list_service')
             },
             {
                 'title': 'Настройки',
@@ -220,7 +227,7 @@ class ListMixin(SiteMixin):
         per_page = self.per_page
         offset = (page - 1) * per_page
         filters = {'limit': per_page, 'offset': offset}
-        result_list = Repository.task_get_list(**filters)
+        result_list = self.get_queryset(**filters)
         context['pagination'] = self.get_paginator(
             page=page, per_page=per_page
         )
@@ -233,6 +240,13 @@ class ListMixin(SiteMixin):
             pass
 
         return context
+
+    def get_query(self, **kwargs):
+        return kwargs
+
+    def get_queryset(self, **kwargs):
+        queryset = Repository.task_get_list(**self.get_query(**kwargs))
+        return queryset
 
     @classmethod
     def get_paginator(cls, page: int, per_page: int) -> Pagination:
@@ -283,7 +297,7 @@ class ListMixin(SiteMixin):
             row_classes = ["field-%s" % field_name]
             try:
                 f, attr, value = lookup_field(field_name, result)
-            except AttributeError:
+            except (AttributeError, ValueError):
                 result_repr = empty_value_display
             else:
                 if f is None:
@@ -363,6 +377,13 @@ class FormMixin(SiteMixin):
 
         return context
 
+    def get_media(self):
+        media = super().get_media()
+        if self.model_name == 'si':
+            media += Media(js=['js/ajax.js'])
+
+        return media
+
     def get_form_kwargs(self):
         kwargs = {
             'meta': {'locales': [settings.LANGUAGE]},
@@ -376,9 +397,12 @@ class FormMixin(SiteMixin):
 
         return form
 
-    def get_object(self):
+    def get_object(self, related_object=None):
         try:
-            return Repository.task_get_object(filters=self.pk)
+            return Repository.task_get_object(
+                filters=self.pk,
+                related_model=related_object,
+            )
         except NoResultFound:
             abort(404)
 
@@ -390,6 +414,9 @@ class FormMixin(SiteMixin):
     def get_success_continue_url(self):
         return request.url
 
+    def pre_save(self, obj):
+        return obj
+
     def object_save(self, obj):
         Repository.task_update_object(obj)
 
@@ -397,6 +424,7 @@ class FormMixin(SiteMixin):
         form = self.get_form()
         if form.validate_on_submit():
             obj = form.instance
+            obj = self.pre_save(obj)
             self.object_save(obj)
 
             if "_continue" in request.form:
@@ -413,7 +441,7 @@ class ChangeMixin(FormMixin):
 
 
 class AddMixin(FormMixin):
-    def get_object(self):
+    def get_object(self, related_object=None):
         return g.model()
 
     def get_success_continue_url(self):

@@ -40,7 +40,7 @@ default_data = {
         {'name': 'описание типа 3'},
     ],
     'Place': [
-        {'name': 'АО "НИИП"'},
+        {'name': 'Собственная база'},
         {'name': 'Сторонняя организация'},
     ],
     'Room': [
@@ -160,6 +160,26 @@ default_data = {
             'date_next_service': datetime.datetime(2021, 0o1, 0o2),
             'certificate': 'certificate 3',
             'is_service': True,
+        },
+    ],
+    'Service': [
+        {
+            'si_id': 1,
+            'date_in_service': datetime.datetime(2000, 0o1, 0o2),
+            'is_ready': True,
+            'is_out': True,
+        },
+        {
+            'si_id': 2,
+            'date_in_service': datetime.datetime(2010, 0o1, 0o2),
+            'is_ready': True,
+            'is_out': False,
+        },
+        {
+            'si_id': 3,
+            'date_in_service': datetime.datetime(2020, 0o1, 0o2),
+            'is_ready': False,
+            'is_out': False,
         },
     ],
     'UserProfile': [

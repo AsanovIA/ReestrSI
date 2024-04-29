@@ -1,21 +1,25 @@
-from flask import g
 from collections.abc import Iterable
-from typing import Union
-
+from flask import g
 from sqlalchemy import select, insert, delete, desc
 from sqlalchemy.orm import joinedload
+from typing import Union
 
 from src.db.database import Base, engine, session_factory
 
 
-def get_options_load(model):
+def get_options_load(model, related=False):
     def get_related_model():
         try:
             select_related = model.Meta.select_related
         except AttributeError:
-            select_related = []
+            return
         for rel in select_related:
-            yield joinedload(getattr(model, rel))
+            if related:
+                yield joinedload(
+                    getattr(g.model, model.__name__.lower())
+                ).joinedload(getattr(model, rel))
+            else:
+                yield joinedload(getattr(model, rel))
 
     return list(get_related_model())
 
@@ -107,6 +111,7 @@ class Repository:
             cls,
             filters: Union[dict, str, int],
             model=None,
+            related_model=None,
     ):
         model = model or g.model
 
@@ -121,7 +126,12 @@ class Repository:
         with session_factory() as session:
             query = select(model).filter_by(**filters)
             options_load = get_options_load(model)
-            query = query.options(*options_load)
+            if related_model:
+                options_related = get_options_load(related_model, True)
+                query = query.options(*options_load, *options_related)
+            else:
+                query = query.options(*options_load)
+
             result = session.execute(query).scalar_one()
 
         return result
