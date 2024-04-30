@@ -24,6 +24,7 @@ class UserProfile(BasePK, Base):
     class Meta:
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
+        verbose_name_change = 'Пользователя'
         fields_display = [
             'username', 'get_full_name', 'email', 'is_active', 'date_joined',
         ]

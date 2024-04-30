@@ -4,6 +4,7 @@ from typing import Optional
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.db.database import Base, BasePK
+from src.core.utils import EMPTY_VALUE_DISPLAY
 
 
 class Si(BasePK, Base):
@@ -107,6 +108,7 @@ class Si(BasePK, Base):
             'room_use_etalon',
             'room_delivery',
             'employee',
+            'employee.division',
         ]
         fields_display = [
             'group_si',
@@ -125,6 +127,8 @@ class Si(BasePK, Base):
             'control_vp',
             'room_delivery',
             'employee',
+            'employee.division',
+            'employee.email',
             'date_last_service',
             'date_next_service',
             'certificate',
@@ -133,6 +137,20 @@ class Si(BasePK, Base):
 
     def __str__(self):
         return self.number
+
+    def division(self):
+        try:
+            value = str(self.employee.division)
+        except AttributeError:
+            value = EMPTY_VALUE_DISPLAY
+        return value
+
+    def email(self):
+        try:
+            value = str(self.employee.email)
+        except AttributeError:
+            value = EMPTY_VALUE_DISPLAY
+        return value
 
 
 class Service(BasePK, Base):

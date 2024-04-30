@@ -27,6 +27,7 @@ class GroupSi(BaseName, Base):
     class Meta(BaseName.Meta):
         verbose_name = 'Группа СИ'
         verbose_name_plural = 'Группы СИ'
+        verbose_name_change = 'Группу СИ'
 
 
 class NameSi(BaseName, Base):
@@ -63,7 +64,7 @@ class ServiceType(BaseName, Base):
 
 
 class ServiceInterval(BaseName, Base):
-    """Межповерочный интервал"""
+    """Интервал обслуживания"""
     __tablename__ = "service_interval"
 
     name: Mapped[int]
@@ -71,19 +72,19 @@ class ServiceInterval(BaseName, Base):
     si: Mapped["Si"] = relationship(back_populates="service_interval")
 
     class Meta(BaseName.Meta):
-        verbose_name = 'Межповерочный интервал'
-        verbose_name_plural = 'Межповерочные интервалы'
+        verbose_name = 'Интервал обслуживания'
+        verbose_name_plural = 'Интервалы обслуживания'
 
 
 class Place(BaseName, Base):
-    """Место поверки/калибровки"""
+    """Место обслуживания"""
     __tablename__ = "place"
 
     si: Mapped["Si"] = relationship(back_populates="place")
 
     class Meta(BaseName.Meta):
-        verbose_name = 'Место поверки/калибровки'
-        verbose_name_plural = 'Места поверки/калибровки'
+        verbose_name = 'Место обслуживания'
+        verbose_name_plural = 'Места обслуживания'
 
 
 class Room(BaseName, Base):
@@ -109,6 +110,7 @@ class DescriptionMethod(BaseName, Base):
     class Meta(BaseName.Meta):
         verbose_name = 'Описание и методика поверки СИ'
         verbose_name_plural = 'Описания и методики поверки СИ'
+        verbose_name_change = 'Описание и методику поверки СИ'
 
 
 class Division(BaseName, Base):

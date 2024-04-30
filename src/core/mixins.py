@@ -85,10 +85,13 @@ class SiteMixin(View):
             'media': self.get_media(),
         }
         if 'admin' in request.blueprints:
-            try:
+            if hasattr(g.model.Meta, 'verbose_name_change'):
+                object_verbose_name = g.model.Meta.verbose_name_change
+            elif hasattr(g.model.Meta, 'verbose_name'):
                 object_verbose_name = g.model.Meta.verbose_name
-            except AttributeError:
+            else:
                 object_verbose_name = ''
+
             context.update({
                 'main_menu': self.get_admin_main_menu(),
                 'perm': {
@@ -266,6 +269,8 @@ class ListMixin(SiteMixin):
         """Создание заголовков столбцов таблицы"""
 
         for field_name in g.fields_display:
+            if '.' in field_name:
+                field_name = field_name.split('.')[-1]
             text = label_for_field(field_name)
 
             yield {"text": text}
@@ -397,11 +402,11 @@ class FormMixin(SiteMixin):
 
         return form
 
-    def get_object(self, related_object=None):
+    def get_object(self, related_model=None):
         try:
             return Repository.task_get_object(
                 filters=self.pk,
-                related_model=related_object,
+                related_model=related_model,
             )
         except NoResultFound:
             abort(404)
@@ -441,7 +446,7 @@ class ChangeMixin(FormMixin):
 
 
 class AddMixin(FormMixin):
-    def get_object(self, related_object=None):
+    def get_object(self, related_model=None):
         return g.model()
 
     def get_success_continue_url(self):

@@ -85,8 +85,8 @@ def label_for_field(name, form=None):
                 attr = getattr(g.model, name)
             else:
                 raise AttributeError(
-                    f'Не верно указаны поля "fields_display" для модели '
-                    f'{g.model.__name__}'
+                    f'Не верно указано поле {name} в "fields_display" для '
+                    f'модели {g.model.__name__}'
                 )
 
             if hasattr(attr, "short_description"):
@@ -105,6 +105,8 @@ def label_for_field(name, form=None):
 
 def lookup_field(name, obj):
     try:
+        if '.' in name:
+            name = name.split('.')[-1]
         f = getattr(g.model, name)
         if not isinstance(f, InstrumentedAttribute):
             raise AttributeError

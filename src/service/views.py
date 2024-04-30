@@ -24,6 +24,11 @@ class ServiceMixin:
 class ListSiView(ListMixin):
     model_name = 'si'
 
+    def get_query(self, **kwargs):
+        kwargs = super().get_query(**kwargs)
+        kwargs['model_related'] = {'employee': get_model('employee')}
+        return kwargs
+
     def get_add_url(self):
         return try_get_url('.add_si')
 
@@ -73,8 +78,8 @@ class ChangeSiView(SiMixin, ChangeMixin):
 
         return kwargs
 
-    def get_object(self, related_object=None):
-        model_related = get_model('employee')
+    def get_object(self, model_related=None):
+        model_related = {'employee': get_model('employee')}
         return super().get_object(model_related)
 
 

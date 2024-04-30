@@ -24,14 +24,12 @@ class SiteForm(FlaskForm):
             else:
                 field.label_class = {}
             field.is_readonly = field.render_kw.get('readonly', False)
-            if not field.is_readonly:
-                #  Заполнение полей формы данными объекта
-                if isinstance(field, SelectField):
+            #  Установка выбранных значений в Select формы
+            if isinstance(field, SelectField) and not field.is_readonly:
+                value = self.data[field.name]
+                if value is None:
                     value = getattr(instance, f'{field.name}_id', None)
-                    value = 0 if value is None else value
-                else:
-                    value = self.data[field.name]
-                setattr(field, 'data', value)
+                field.data = value
 
     def contents(self, field):
         from sqlalchemy.orm import Relationship
