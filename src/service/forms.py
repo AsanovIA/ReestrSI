@@ -1,48 +1,48 @@
-from wtforms import (SelectField, DateField, IntegerField, StringField,
-                     BooleanField, TextAreaField, FileField)
+from wtforms import (DateField, IntegerField, StringField, BooleanField,
+                     TextAreaField, FileField)
 from wtforms.validators import Length, NumberRange, Optional, DataRequired
 
-from src.core.forms import SiteForm
+from src.core import SiteForm, ExtendedSelectField
 
 
 class SiForm(SiteForm):
     """Средство измерения"""
 
-    group_si = SelectField(
+    group_si = ExtendedSelectField(
         label='Группы СИ по областям и разделам областей измерений',
         coerce=int,
-        render_kw={'model': 'GroupSi'},
+        model='GroupSi',
         validators=[DataRequired()],
     )
-    name_si = SelectField(
+    name_si = ExtendedSelectField(
         label='Наименование СИ',
         coerce=int,
-        render_kw={'model': 'NameSi'},
+        model='NameSi',
     )
-    type_si = SelectField(
+    type_si = ExtendedSelectField(
         label='Тип СИ',
         coerce=int,
-        render_kw={'model': 'TypeSi'},
+        model='TypeSi',
     )
     number = StringField(
         label='Заводской номер',
         validators=[DataRequired(), Length(max=100)],
         description='максимум 100 символов'
     )
-    description_method = SelectField(
+    description_method = ExtendedSelectField(
         label='Описание и методика поверки СИ',
         coerce=int,
-        render_kw={'model': 'DescriptionMethod'},
+        model='DescriptionMethod',
     )
-    service_type = SelectField(
+    service_type = ExtendedSelectField(
         label='Вид метрологического обслуживания',
         coerce=int,
-        render_kw={'model': 'ServiceType'},
+        model='ServiceType',
     )
-    service_interval = SelectField(
+    service_interval = ExtendedSelectField(
         label='Межповерочный интервал',
         coerce=int,
-        render_kw={'model': 'ServiceInterval'},
+        model='ServiceInterval',
     )
     etalon = BooleanField(label='Эталон', default=False)
     category_etalon = StringField(
@@ -60,26 +60,26 @@ class SiForm(SiteForm):
         validators=[Length(max=100)],
         description='максимум 100 символов'
     )
-    room_use_etalon = SelectField(
+    room_use_etalon = ExtendedSelectField(
         label='№ помещения, в котором применяется эталон',
         coerce=int,
-        render_kw={'model': 'Room'},
+        model='Room',
     )
-    place = SelectField(
+    place = ExtendedSelectField(
         label='Место поверки/калибровки',
         coerce=int,
-        render_kw={'model': 'Place'},
+        model='Place',
     )
     control_vp = BooleanField(label='Контроль ВП', default=False)
-    room_delivery = SelectField(
+    room_delivery = ExtendedSelectField(
         label='№ помещения где можно получить СИ после обслуживания',
         coerce=int,
-        render_kw={'model': 'Room'},
+        model='Room',
     )
-    employee = SelectField(
+    employee = ExtendedSelectField(
         label='Ответственное лицо',
         coerce=int,
-        render_kw={'model': 'Employee'},
+        model='Employee',
     )
     division = StringField(
         label='Подразделение',

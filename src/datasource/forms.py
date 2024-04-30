@@ -1,7 +1,7 @@
-from wtforms import StringField, FileField, EmailField, SelectField
+from wtforms import StringField, FileField, EmailField
 from wtforms.validators import Length, Email, InputRequired, Optional
 
-from src.core import SiteForm, Unique
+from src.core import SiteForm, ExtendedSelectField, Unique
 
 
 class FieldNameForm(SiteForm):
@@ -77,8 +77,8 @@ class EmployeeForm(SiteForm):
             Unique(message='Сотрудник с таким e-mail уже существует')
         ]
     )
-    division = SelectField(
+    division = ExtendedSelectField(
         label='Подразделение',
         coerce=int,
-        render_kw={'model': 'Division'},
+        model='Division'
     )

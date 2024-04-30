@@ -1,3 +1,4 @@
+from src.core.fields import ExtendedSelectField
 from src.core.forms import SiteForm
 from src.core.media import Media
 from src.core.mixins import (

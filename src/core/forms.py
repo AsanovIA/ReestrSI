@@ -2,8 +2,7 @@ from flask import g
 from flask_wtf import FlaskForm
 from wtforms.fields.choices import SelectField
 
-from src.db.repository import Repository
-from src.core.utils import FIELDS_EXCLUDE, BLANK_CHOICE, get_model
+from .utils import FIELDS_EXCLUDE, label_for_field
 
 
 class SiteForm(FlaskForm):
@@ -18,31 +17,18 @@ class SiteForm(FlaskForm):
                 self.fields.append(field.name)
             if field.render_kw is None:
                 field.render_kw = {}
-            label_class = {}
             if getattr(field.flags, 'required', None):
-                label_class = {'class': 'required'}
-            field.label_class = label_class
-            if isinstance(field, SelectField):
-                model_name = field.render_kw.get('model')
-                if model_name is None:
-                    raise KeyError(
-                        f'Отсутствует ключ "model" параметра "render_kw" для '
-                        f'{field.name} класса {self.__class__.__name__}'
-                    )
-                model_related = get_model(model_name)
-                kwargs = {'model': model_related}
-                choices = [
-                    (obj.id, obj)
-                    for obj in Repository.task_get_list(**kwargs)
-                ]
-                choices = BLANK_CHOICE + choices
-                setattr(field, 'choices', choices)
-
+                field.label_class = {'class': 'required'}
+            else:
+                field.label_class = {}
             field.is_readonly = field.render_kw.get('readonly', False)
             if not field.is_readonly:
-                value = self.data[field.name]
-                if value is None:
+                #  Заполнение полей формы данными объекта
+                if isinstance(field, SelectField):
                     value = getattr(instance, f'{field.name}_id', None)
+                    value = 0 if value is None else value
+                else:
+                    value = self.data[field.name]
                 setattr(field, 'data', value)
 
     def contents(self, field):
@@ -100,7 +86,8 @@ class SiteForm(FlaskForm):
             if exclude is not None and field.name in exclude:
                 continue
             if isinstance(field, SelectField):
-                setattr(instance, f'{field.name}_id', self.data[field.name])
+                value = self.data[field.name]
+                setattr(instance, f'{field.name}_id', value if value else None)
             else:
                 value = self.data[field.name]
                 value = value if value != '' else None
