@@ -61,20 +61,18 @@ def get_form_class(model=None):
     abort(404)
 
 
-def label_for_field(name):
+def label_for_field(name, form=None):
+    form = form or g.form
     try:
         try:
             field = getattr(g.model, name)
-            if hasattr(field, 'doc'):
-                label = field.doc
-            else:
-                label = field.property.doc
+            label = field.info.get('label')
             if label is None:
-                raise AttributeError
-        except AttributeError:
-            field = getattr(g.form, name)
+                field = getattr(g.model, f'{name}_id')
+                label = field.info['label']
+        except (AttributeError, KeyError):
+            field = getattr(form, name)
             label = field.label.text
-
     except AttributeError:
         if name == "__str__":
             label = str(g.model.Meta.verbose_name)

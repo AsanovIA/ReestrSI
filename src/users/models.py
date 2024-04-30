@@ -9,14 +9,17 @@ class UserProfile(BasePK, Base):
     """Пользователь"""
     __tablename__ = "userprofile"
 
-    username: Mapped[str_100]
-    password: Mapped[str]
-    last_name: Mapped[str_100]
-    first_name: Mapped[str_100]
-    middle_name: Mapped[str_100]
-    email: Mapped[Optional[str]] = mapped_column(unique=True)
-    is_active: Mapped[bool] = mapped_column(default=True)
-    date_joined: Mapped[created_at] = mapped_column(doc='Дата регистрации')
+    username: Mapped[str_100] = mapped_column(info={'label': 'Логин'})
+    password: Mapped[str] = mapped_column(info={'label': 'Пароль'})
+    last_name: Mapped[str_100] = mapped_column(info={'label': 'Фамилия'})
+    first_name: Mapped[str_100] = mapped_column(info={'label': 'Имя'})
+    middle_name: Mapped[str_100] = mapped_column(info={'label': 'Отчество'})
+    email: Mapped[Optional[str]] = mapped_column(
+        info={'label': 'e-mail'}, unique=True)
+    is_active: Mapped[bool] = mapped_column(
+        info={'label': 'Активный'}, default=True)
+    date_joined: Mapped[created_at] = mapped_column(
+        info={'label': 'Дата регистрации'})
 
     class Meta:
         verbose_name = 'Пользователь'

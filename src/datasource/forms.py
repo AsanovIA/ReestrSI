@@ -6,7 +6,6 @@ from src.core import SiteForm, ExtendedSelectField, Unique
 
 class FieldNameForm(SiteForm):
     name = StringField(
-        label='Наименование',
         validators=[InputRequired(), Length(max=256), Unique()],
         description='максимум 256 символов'
     )
@@ -27,8 +26,8 @@ class TypeSiForm(FieldNameForm):
 class DescriptionMethodForm(FieldNameForm):
     """Описание и методика поверки СИ"""
 
-    description = FileField(label='Описание СИ')
-    method = FileField(label='Методика поверки СИ')
+    description = FileField()
+    method = FileField()
 
 
 class ServiceTypeForm(FieldNameForm):
@@ -55,30 +54,22 @@ class EmployeeForm(SiteForm):
     """Ответственное лицо (сотрудник)"""
 
     last_name = StringField(
-        label='Фамилия',
         validators=[InputRequired(), Length(max=100)],
         description='максимум 100 символов'
     )
     first_name = StringField(
-        label='Имя',
         validators=[InputRequired(), Length(max=100)],
         description='максимум 100 символов'
     )
     middle_name = StringField(
-        label='Отчество',
         validators=[InputRequired(), Length(max=100)],
         description='максимум 100 символов'
     )
     email = EmailField(
-        label='e-mail',
         validators=[
             Optional(),
             Email(),
             Unique(message='Сотрудник с таким e-mail уже существует')
         ]
     )
-    division = ExtendedSelectField(
-        label='Подразделение',
-        coerce=int,
-        model='Division'
-    )
+    division = ExtendedSelectField(coerce=int, model='Division')

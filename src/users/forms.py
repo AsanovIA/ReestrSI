@@ -41,34 +41,28 @@ class ReadOnlyPasswordHashField(Field):
 
 class UserProfileForm(SiteForm):
     username = StringField(
-        label='Логин',
         validators=[DataRequired(), Length(max=100), Unique()],
         description='максимум 100 символов'
     )
     password = ReadOnlyPasswordHashField(
-        label='Пароль',
         description='Пароли хранятся в зашифрованном виде, поэтому нет '
                     'возможности посмотреть пароль этого пользователя, но вы '
                     'можете изменить его используя '
                     '<a href="{}">эту форму</a>.'
     )
     last_name = StringField(
-        label='Фамилия',
         validators=[DataRequired(), Length(max=100)],
         description='максимум 100 символов'
     )
     first_name = StringField(
-        label='Имя',
         validators=[DataRequired(), Length(max=100)],
         description='максимум 100 символов'
     )
     middle_name = StringField(
-        label='Отчество',
         validators=[DataRequired(), Length(max=100)],
         description='максимум 100 символов'
     )
     email = EmailField(
-        label='e-mail',
         validators=[
             Email(),
             Unique(message='Пользователь с таким e-mail уже существует'),
@@ -76,15 +70,9 @@ class UserProfileForm(SiteForm):
         ]
     )
     is_active = BooleanField(
-        label='Активный',
         description='Отметьте, если пользователь должен считаться активным. '
                     'Уберите эту отметку вместо удаления учётной записи.'
     )
-
-    class Meta:
-        exclude = [
-            'password',
-        ]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -95,12 +83,10 @@ class UserProfileForm(SiteForm):
 
 class AddUserForm(SiteForm):
     username = StringField(
-        label='Логин',
         validators=[DataRequired(), Length(max=100), Unique()],
         description='максимум 100 символов'
     )
     password = PasswordField(
-        label='Пароль',
         validators=[
             InputRequired(),
             EqualTo(fieldname='password2', message='Пароли не совпадают'),
@@ -113,22 +99,18 @@ class AddUserForm(SiteForm):
         description='Для подтверждения введите, пожалуйста, пароль ещё раз.'
     )
     last_name = StringField(
-        label='Фамилия',
         validators=[DataRequired(), Length(max=100)],
         description='максимум 100 символов'
     )
     first_name = StringField(
-        label='Имя',
         validators=[DataRequired(), Length(max=100)],
         description='максимум 100 символов'
     )
     middle_name = StringField(
-        label='Отчество',
         validators=[DataRequired(), Length(max=100)],
         description='максимум 100 символов'
     )
     email = EmailField(
-        label='e-mail',
         validators=[
             Email(),
             Unique(message='Пользователь с таким e-mail уже существует'),
@@ -155,7 +137,6 @@ class AddUserForm(SiteForm):
 
 class AdminPasswordChangeForm(SiteForm):
     password = PasswordField(
-        label='Пароль',
         validators=[
             InputRequired(),
             EqualTo(fieldname='password2', message='Пароли не совпадают'),

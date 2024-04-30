@@ -15,6 +15,8 @@ class SiteForm(FlaskForm):
         for field in self:
             if field.name not in FIELDS_EXCLUDE:
                 self.fields.append(field.name)
+                #  Установка label поля формы
+                field.label.text = label_for_field(field.name, self)
             if field.render_kw is None:
                 field.render_kw = {}
             if getattr(field.flags, 'required', None):

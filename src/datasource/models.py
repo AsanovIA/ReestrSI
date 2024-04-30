@@ -7,7 +7,8 @@ from src.db.database import Base, BasePK, str_100, str_256
 
 
 class BaseName(BasePK):
-    name: Mapped[str_256] = mapped_column(unique=True)
+    name: Mapped[str_256] = mapped_column(
+        info={'label': 'Наименование'}, unique=True)
 
     class Meta:
         fields_display = ['name']
@@ -98,8 +99,10 @@ class DescriptionMethod(BaseName, Base):
     """Описание СИ и методика поверки СИ"""
     __tablename__ = "description_method"
 
-    description: Mapped[Optional[str]]
-    method: Mapped[Optional[str]]
+    description: Mapped[Optional[str]] = mapped_column(
+        info={'label': 'Описание СИ'})
+    method: Mapped[Optional[str]] = mapped_column(
+        info={'label': 'Методика поверки СИ'})
 
     si: Mapped["Si"] = relationship(back_populates="description_method")
 
@@ -123,12 +126,17 @@ class Employee(BasePK, Base):
     """Ответственное лицо (сотрудник)"""
     __tablename__ = "employee"
 
-    last_name: Mapped[Optional[str_100]]
-    first_name: Mapped[str_100]
-    middle_name: Mapped[Optional[str_100]]
-    email: Mapped[Optional[str]] = mapped_column(unique=True)
+    last_name: Mapped[Optional[str_100]] = mapped_column(
+        info={'label': 'Фамилия'})
+    first_name: Mapped[str_100] = mapped_column(
+        info={'label': 'Имя'})
+    middle_name: Mapped[Optional[str_100]] = mapped_column(
+        info={'label': 'Отчество'})
+    email: Mapped[Optional[str]] = mapped_column(
+        info={'label': 'e-mail'}, unique=True)
     division_id: Mapped[int] = mapped_column(
-        ForeignKey("division.id", ondelete="CASCADE")
+        ForeignKey("division.id", ondelete="CASCADE"),
+        info={'label': 'Подразделение'},
     )
 
     division: Mapped["Division"] = relationship(back_populates="employee")
