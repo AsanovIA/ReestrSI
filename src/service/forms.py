@@ -1,8 +1,9 @@
-from wtforms import (DateField, IntegerField, StringField, BooleanField,
-                     TextAreaField, FileField)
+from wtforms import (
+    DateField, IntegerField, StringField, BooleanField, TextAreaField
+)
 from wtforms.validators import Length, NumberRange, Optional, DataRequired
 
-from src.core import SiteForm, ExtendedSelectField
+from src.core import SiteForm, ExtendedFileField, ExtendedSelectField
 
 
 class SiForm(SiteForm):
@@ -17,7 +18,9 @@ class SiForm(SiteForm):
         validators=[DataRequired(), Length(max=100)],
         description='максимум 100 символов'
     )
-    description_method = ExtendedSelectField(coerce=int, model='DescriptionMethod')
+    description_method = ExtendedSelectField(
+        coerce=int, model='DescriptionMethod'
+    )
     service_type = ExtendedSelectField(coerce=int,model='ServiceType')
     service_interval = ExtendedSelectField(coerce=int, model='ServiceInterval')
     etalon = BooleanField(default=False)
@@ -46,7 +49,7 @@ class SiForm(SiteForm):
     )
     date_last_service = DateField()
     date_next_service = DateField()
-    certificate = FileField()
+    certificate = ExtendedFileField(upload='certificate/')
     is_service = BooleanField(default=False, render_kw={'readonly': True})
 
 
@@ -60,7 +63,7 @@ class ServiceForm(SiteForm):
     )
     date_next_service = DateField(validators=[Optional()])
     is_ready = BooleanField(default=False)
-    certificate = FileField()
+    certificate = ExtendedFileField(upload='certificate/')
     note = TextAreaField(
         validators=[Length(max=1000)], description='максимум 1000 символов'
     )
@@ -77,7 +80,7 @@ class OutServiceForm(SiteForm):
 
     date_out_service = DateField()
     date_next_service = DateField()
-    certificate = FileField()
+    certificate = ExtendedFileField(upload='certificate/')
     note = TextAreaField(
         validators=[Length(max=1000)], description='максимум 1000 символов'
     )

@@ -1,7 +1,7 @@
-from wtforms import StringField, FileField, EmailField
+from wtforms import StringField, EmailField
 from wtforms.validators import Length, Email, InputRequired, Optional
 
-from src.core import SiteForm, ExtendedSelectField, Unique
+from src.core import SiteForm, ExtendedFileField, ExtendedSelectField, Unique
 
 
 class FieldNameForm(SiteForm):
@@ -26,8 +26,8 @@ class TypeSiForm(FieldNameForm):
 class DescriptionMethodForm(FieldNameForm):
     """Описание и методика поверки СИ"""
 
-    description = FileField()
-    method = FileField()
+    description = ExtendedFileField(upload='description/')
+    method = ExtendedFileField(upload='method/')
 
 
 class ServiceTypeForm(FieldNameForm):

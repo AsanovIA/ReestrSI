@@ -1,8 +1,10 @@
+import os
+
 from flask import g
 from flask_wtf import FlaskForm
-from wtforms.fields.choices import SelectField
 
-from .utils import FIELDS_EXCLUDE, label_for_field
+from . import ExtendedFileField, ExtendedSelectField
+from .utils import FIELDS_EXCLUDE, try_get_url, label_for_field
 
 
 class SiteForm(FlaskForm):
@@ -24,8 +26,16 @@ class SiteForm(FlaskForm):
             else:
                 field.label_class = {}
             field.is_readonly = field.render_kw.get('readonly', False)
+
+            if isinstance(field, ExtendedFileField):
+                self.is_multipart = True
+                if field.object_data is None:
+                    continue
+                path_file = os.path.join(field.upload, field.object_data)
+                field.url = try_get_url('source.view_file', filename=path_file)
+
             #  Установка выбранных значений в Select формы
-            if isinstance(field, SelectField) and not field.is_readonly:
+            if isinstance(field, ExtendedSelectField) and not field.is_readonly:
                 value = self.data[field.name]
                 if value is None:
                     value = getattr(instance, f'{field.name}_id', None)
@@ -85,9 +95,10 @@ class SiteForm(FlaskForm):
                 continue
             if exclude is not None and field.name in exclude:
                 continue
-            if isinstance(field, SelectField):
-                value = self.data[field.name]
-                setattr(instance, f'{field.name}_id', value if value else None)
+            if isinstance(field, ExtendedFileField):
+                continue
+            elif isinstance(field, ExtendedSelectField):
+                setattr(instance, f'{field.name}_id', self.data[field.name])
             else:
                 value = self.data[field.name]
                 value = value if value != '' else None

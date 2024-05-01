@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str
 
     BASEDIR: str = os.path.dirname(os.path.abspath(__file__))
+    ALLOWED_EXTENSIONS: List[str] = ['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif']
 
     APPS: List[str] = [
         'datasource',

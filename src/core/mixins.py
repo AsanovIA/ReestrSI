@@ -1,12 +1,14 @@
+import os
 import datetime
 from typing import Union, List, Tuple
 
-from flask import abort, g, redirect, request, render_template
+from flask import abort, current_app, g, redirect, render_template, request
 from flask.views import View
 from flask_paginate import Pagination, get_page_parameter
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Relationship
 from werkzeug.routing import BuildError
+from werkzeug.utils import secure_filename
 
 from src.config import settings
 from src.db.repository import Repository
@@ -420,6 +422,27 @@ class FormMixin(SiteMixin):
         return request.url
 
     def pre_save(self, obj):
+        for field_name, file in request.files.items():
+            field = getattr(g.form, field_name)
+            folder = str(os.path.join(
+                current_app.config['UPLOAD_FOLDER'],
+                field.upload
+            ))
+            if f'{field_name}_clear' in request.form:
+                old_filename = getattr(obj, field_name)
+                os.remove(os.path.join(folder, old_filename))
+                setattr(obj, field_name, None)
+            elif file.filename:
+                if not os.path.exists(folder):
+                    os.makedirs(folder)
+                filename = secure_filename(file.filename)
+                old_filename = getattr(obj, field_name)
+                if filename == old_filename:
+                    continue
+                if old_filename:
+                    os.remove(os.path.join(folder, old_filename))
+                file.save(os.path.join(folder, filename))
+                setattr(obj, field_name, filename)
         return obj
 
     def object_save(self, obj):

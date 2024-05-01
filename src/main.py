@@ -17,6 +17,7 @@ app = Flask(__name__)
 
 app.config['SECRET_KEY'] = settings.SECRET_KEY
 app.config['WTF_I18N_ENABLED'] = False
+app.config['UPLOAD_FOLDER'] = 'uploads/'
 
 app.register_blueprint(router_admin)
 app.register_blueprint(router_auth)
@@ -32,6 +33,9 @@ login_manager.login_view = 'auth.login'
 def load_user(user_id):
     return UserLogin().get_user(user_id)
 
+
+if not os.path.exists(app.config['UPLOAD_FOLDER']):
+    os.makedirs(app.config['UPLOAD_FOLDER'])
 
 if __name__ == "__main__":
     if '--db_default' in sys.argv:
