@@ -94,7 +94,8 @@ class Si(BasePK, Base):
 
     service: Mapped["Service"] = relationship(back_populates="si")
 
-    class Meta:
+    class Meta(Base.Meta):
+        action_suffix = 'о'
         verbose_name = 'Средство измерения'
         verbose_name_plural = 'Средства измерения'
         select_related = [
@@ -182,7 +183,8 @@ class Service(BasePK, Base):
 
     si: Mapped["Si"] = relationship(back_populates="service")
 
-    class Meta:
+    class Meta(Base.Meta):
+        action_suffix = 'о'
         verbose_name = 'Обслуживание СИ'
         verbose_name_plural = 'Обслуживание СИ'
         select_related = ['si']

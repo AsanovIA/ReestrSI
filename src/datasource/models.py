@@ -24,7 +24,8 @@ class GroupSi(BaseName, Base):
 
     si: Mapped["Si"] = relationship(back_populates="group_si")
 
-    class Meta(BaseName.Meta):
+    class Meta(BaseName.Meta, Base.Meta):
+        action_suffix = 'а'
         verbose_name = 'Группа СИ'
         verbose_name_plural = 'Группы СИ'
         verbose_name_change = 'Группу СИ'
@@ -36,7 +37,8 @@ class NameSi(BaseName, Base):
 
     si: Mapped["Si"] = relationship(back_populates="name_si")
 
-    class Meta(BaseName.Meta):
+    class Meta(BaseName.Meta, Base.Meta):
+        action_suffix = 'о'
         verbose_name = 'Наименование СИ'
         verbose_name_plural = 'Наименования СИ'
 
@@ -47,7 +49,7 @@ class TypeSi(BaseName, Base):
 
     si: Mapped["Si"] = relationship(back_populates="type_si")
 
-    class Meta(BaseName.Meta):
+    class Meta(BaseName.Meta, Base.Meta):
         verbose_name = 'Тип СИ'
         verbose_name_plural = 'Типы СИ'
 
@@ -58,7 +60,7 @@ class ServiceType(BaseName, Base):
 
     si: Mapped["Si"] = relationship(back_populates="service_type")
 
-    class Meta(BaseName.Meta):
+    class Meta(BaseName.Meta, Base.Meta):
         verbose_name = 'Вид метрологического обслуживания'
         verbose_name_plural = 'Виды метрологического обслуживания'
 
@@ -71,7 +73,7 @@ class ServiceInterval(BaseName, Base):
 
     si: Mapped["Si"] = relationship(back_populates="service_interval")
 
-    class Meta(BaseName.Meta):
+    class Meta(BaseName.Meta, Base.Meta):
         verbose_name = 'Интервал обслуживания'
         verbose_name_plural = 'Интервалы обслуживания'
 
@@ -82,7 +84,8 @@ class Place(BaseName, Base):
 
     si: Mapped["Si"] = relationship(back_populates="place")
 
-    class Meta(BaseName.Meta):
+    class Meta(BaseName.Meta, Base.Meta):
+        action_suffix = 'о'
         verbose_name = 'Место обслуживания'
         verbose_name_plural = 'Места обслуживания'
 
@@ -91,7 +94,8 @@ class Room(BaseName, Base):
     """№ помещения"""
     __tablename__ = "room"
 
-    class Meta(BaseName.Meta):
+    class Meta(BaseName.Meta, Base.Meta):
+        action_suffix = 'о'
         verbose_name = 'Помещение'
         verbose_name_plural = 'Помещения'
 
@@ -107,7 +111,8 @@ class DescriptionMethod(BaseName, Base):
 
     si: Mapped["Si"] = relationship(back_populates="description_method")
 
-    class Meta(BaseName.Meta):
+    class Meta(BaseName.Meta, Base.Meta):
+        action_suffix = 'ы'
         verbose_name = 'Описание и методика поверки СИ'
         verbose_name_plural = 'Описания и методики поверки СИ'
         verbose_name_change = 'Описание и методику поверки СИ'
@@ -119,7 +124,8 @@ class Division(BaseName, Base):
 
     employee: Mapped["Employee"] = relationship(back_populates="division")
 
-    class Meta(BaseName.Meta):
+    class Meta(BaseName.Meta, Base.Meta):
+        action_suffix = 'о'
         verbose_name = 'Подразделение'
         verbose_name_plural = 'Подразделения'
 
@@ -144,7 +150,8 @@ class Employee(BasePK, Base):
     division: Mapped["Division"] = relationship(back_populates="employee")
     si: Mapped["Si"] = relationship(back_populates="employee")
 
-    class Meta:
+    class Meta(Base.Meta):
+        action_suffix = 'о'
         verbose_name = 'Ответственное лицо'
         verbose_name_plural = 'Ответственные лица'
         select_related = ['division']

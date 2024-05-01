@@ -2,7 +2,9 @@ import os
 import datetime
 from typing import Union, List, Tuple
 
-from flask import abort, current_app, g, redirect, render_template, request
+from flask import (
+    abort, current_app, flash, g, redirect, render_template, request
+)
 from flask.views import View
 from flask_paginate import Pagination, get_page_parameter
 from sqlalchemy.exc import NoResultFound
@@ -363,6 +365,7 @@ class ListMixin(SiteMixin):
 class FormMixin(SiteMixin):
     template: str = 'form_result.html'
     methods = ["GET", "POST"]
+    action = None
 
     def g_init(self):
         super().g_init()
@@ -416,6 +419,13 @@ class FormMixin(SiteMixin):
             f'.list_{self.blueprint_name}', model_name=self.model_name
         )
 
+    def get_object_url(self):
+        return try_get_url(
+            f'.change_{self.blueprint_name}',
+            model_name=self.model_name,
+            pk=g.object.id
+        )
+
     def get_success_continue_url(self):
         return request.url
 
@@ -446,28 +456,65 @@ class FormMixin(SiteMixin):
     def object_save(self, obj):
         Repository.task_update_object(obj)
 
+    def get_success_message(self, obj):
+        actions = {'add': 'добавлен', 'change': 'изменен', 'delete': 'удален'}
+        name_str = str(obj)
+        resume_text = ''
+        link_or_text = name_str
+        if "_continue" in request.form:
+            resume_text = ' Можете продолжить редактирование.'
+        else:
+            if self.action != 'delete':
+                obj_url = self.get_object_url()
+                link_or_text = format_html(
+                    '<a href="{}">{}</a>', obj_url, name_str
+                )
+
+        message = format_html(
+            '{} "{}" успешно {}{}.{}',
+            obj.Meta.verbose_name,
+            link_or_text,
+            actions[self.action],
+            obj.Meta.action_suffix,
+            resume_text,
+        )
+
+        return message
+
     def post(self, **kwargs):
         form = self.get_form()
         if form.validate_on_submit():
             if form.has_changed():
                 obj = form.instance
                 obj = self.pre_save(obj)
+
+                message = self.get_success_message(obj)
+                category = 'success'
+
                 self.object_save(obj)
 
+            else:
+                message = 'Изменения отсутствуют. Сохранение отменено.'
+                category = 'warning'
+
+            flash(message, category)
             if "_continue" in request.form:
                 return redirect(self.get_success_continue_url())
             return redirect(self.get_success_url())
 
         else:
+            flash('Форма заполнена неверно!', 'error')
             kwargs['form'] = form
             return self.get(**kwargs)
 
 
 class ChangeMixin(FormMixin):
-    pass
+    action = 'change'
 
 
 class AddMixin(FormMixin):
+    action = 'add'
+
     def get_object(self, related_model=None):
         return g.model()
 
@@ -483,4 +530,4 @@ class AddMixin(FormMixin):
 
 
 class DeleteMixin(SiteMixin):
-    pass
+    action = 'delete'

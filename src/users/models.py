@@ -21,7 +21,7 @@ class UserProfile(BasePK, Base):
     date_joined: Mapped[created_at] = mapped_column(
         info={'label': 'Дата регистрации'})
 
-    class Meta:
+    class Meta(Base.Meta):
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
         verbose_name_change = 'Пользователя'

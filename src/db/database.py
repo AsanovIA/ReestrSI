@@ -36,6 +36,9 @@ class Base(DeclarativeBase):
     repr_cols_num = 3
     repr_cols = tuple()
 
+    class Meta:
+        action_suffix = ''
+
     def __repr__(self):
         cols = []
         for idx, col in enumerate(self.__table__.columns.keys()):
