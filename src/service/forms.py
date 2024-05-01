@@ -41,12 +41,8 @@ class SiForm(SiteForm):
     control_vp = BooleanField(default=False)
     room_delivery = ExtendedSelectField(coerce=int, model='Room')
     employee = ExtendedSelectField(coerce=int, model='Employee')
-    division = StringField(
-        label='Подразделение', render_kw={'readonly': True}
-    )
-    email = StringField(
-        label='e-mail', render_kw={'readonly': True}
-    )
+    division = StringField(render_kw={'readonly': True})
+    email = StringField(render_kw={'readonly': True})
     date_last_service = DateField()
     date_next_service = DateField()
     certificate = ExtendedFileField(upload='certificate/')

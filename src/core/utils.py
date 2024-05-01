@@ -62,7 +62,7 @@ def get_form_class(model=None):
 
 
 def label_for_field(name, form=None):
-    form = form or g.form
+    form = form or getattr(g, 'form', None)
     try:
         try:
             field = getattr(g.model, name)

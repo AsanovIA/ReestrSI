@@ -1,7 +1,6 @@
-from src.core.mixins import ListMixin
+from src.service.views import ListSiView
 
 
-class ListObjectView(ListMixin):
-    model_name = 'si'
+class ListObjectView(ListSiView):
     fields_link = None
     decorators = []

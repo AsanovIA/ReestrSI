@@ -216,8 +216,6 @@ class ListMixin(SiteMixin):
         else:
             g.fields_link = getattr(g.model.Meta, 'fields_link', ())
 
-        g.form = get_form_class()()
-
     def get_btn(self):
         return {'btn_add': True}
 
@@ -451,9 +449,10 @@ class FormMixin(SiteMixin):
     def post(self, **kwargs):
         form = self.get_form()
         if form.validate_on_submit():
-            obj = form.instance
-            obj = self.pre_save(obj)
-            self.object_save(obj)
+            if form.has_changed():
+                obj = form.instance
+                obj = self.pre_save(obj)
+                self.object_save(obj)
 
             if "_continue" in request.form:
                 return redirect(self.get_success_continue_url())

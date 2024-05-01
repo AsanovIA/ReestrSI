@@ -152,6 +152,9 @@ class Si(BasePK, Base):
             value = EMPTY_VALUE_DISPLAY
         return value
 
+    division.short_description = 'Подразделение'
+    email.short_description = 'e-mail'
+
 
 class Service(BasePK, Base):
     """Сервис - обслуживание средств измерения"""
