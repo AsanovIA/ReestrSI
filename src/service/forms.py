@@ -10,19 +10,17 @@ class SiForm(SiteForm):
     """Средство измерения"""
 
     group_si = ExtendedSelectField(
-        coerce=int, model='GroupSi', validators=[DataRequired()]
+        model='GroupSi', validators=[DataRequired()]
     )
-    name_si = ExtendedSelectField(coerce=int, model='NameSi')
-    type_si = ExtendedSelectField(coerce=int, model='TypeSi')
+    name_si = ExtendedSelectField(model='NameSi')
+    type_si = ExtendedSelectField(model='TypeSi')
     number = StringField(
         validators=[DataRequired(), Length(max=100)],
         description='максимум 100 символов'
     )
-    description_method = ExtendedSelectField(
-        coerce=int, model='DescriptionMethod'
-    )
-    service_type = ExtendedSelectField(coerce=int,model='ServiceType')
-    service_interval = ExtendedSelectField(coerce=int, model='ServiceInterval')
+    description_method = ExtendedSelectField(model='DescriptionMethod')
+    service_type = ExtendedSelectField(model='ServiceType')
+    service_interval = ExtendedSelectField(model='ServiceInterval')
     etalon = BooleanField(default=False)
     category_etalon = StringField(
         validators=[Length(max=100)],
@@ -36,33 +34,37 @@ class SiForm(SiteForm):
         validators=[Length(max=100)],
         description='максимум 100 символов'
     )
-    room_use_etalon = ExtendedSelectField(coerce=int, model='Room')
-    place = ExtendedSelectField(coerce=int, model='Place')
+    room_use_etalon = ExtendedSelectField(model='Room')
+    place = ExtendedSelectField(model='Place')
     control_vp = BooleanField(default=False)
-    room_delivery = ExtendedSelectField(coerce=int, model='Room')
-    employee = ExtendedSelectField(coerce=int, model='Employee')
-    division = StringField(render_kw={'readonly': True})
-    email = StringField(render_kw={'readonly': True})
+    room_delivery = ExtendedSelectField(model='Room')
+    employee = ExtendedSelectField(model='Employee')
+    division = StringField()
+    email = StringField()
     date_last_service = DateField()
     date_next_service = DateField()
     certificate = ExtendedFileField(upload='certificate/')
-    is_service = BooleanField(default=False, render_kw={'readonly': True})
+    is_service = BooleanField(default=False)
+
+    class Meta:
+        readonly_fields = ['division', 'email', 'is_service']
 
 
 class ServiceForm(SiteForm):
     """Обслуживание СИ"""
 
-    date_in_service = DateField(render_kw={'readonly': True})
+    date_in_service = DateField()
     date_out_service = DateField(validators=[Optional()])
-    date_last_service = DateField(
-        validators=[Optional()], render_kw={'readonly': True}
-    )
+    date_last_service = DateField(validators=[Optional()])
     date_next_service = DateField(validators=[Optional()])
     is_ready = BooleanField(default=False)
     certificate = ExtendedFileField(upload='certificate/')
     note = TextAreaField(
         validators=[Length(max=1000)], description='максимум 1000 символов'
     )
+
+    class Meta:
+        readonly_fields = ['date_in_service', 'date_last_service']
 
 
 class AddServiceForm(SiteForm):

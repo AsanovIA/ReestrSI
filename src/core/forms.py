@@ -9,8 +9,11 @@ from .utils import FIELDS_EXCLUDE, try_get_url, label_for_field
 
 
 class SiteForm(FlaskForm):
-    def __init__(self, obj=None, *args, **kwargs):
+    def __init__(self, obj, *args, **kwargs):
         super().__init__(obj=obj, *args, **kwargs)
+        readonly_fields = getattr(
+            getattr(self, 'Meta', []), 'readonly_fields', []
+        )
         self.instance = obj
         self.changed_data = []
         self.fields = []
@@ -19,13 +22,13 @@ class SiteForm(FlaskForm):
                 self.fields.append(field.name)
                 #  Установка label полей формы
                 field.label.text = label_for_field(field.name, self) + ':'
-            if field.render_kw is None:
-                field.render_kw = {}
             if getattr(field.flags, 'required', None):
                 field.label_class = {'class': 'required'}
             else:
                 field.label_class = {}
-            field.is_readonly = field.render_kw.get('readonly', False)
+            field.is_readonly = (
+                True if field.name in readonly_fields else False
+            )
 
             if isinstance(field, ExtendedFileField):
                 self.is_multipart = True

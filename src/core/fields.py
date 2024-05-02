@@ -11,8 +11,8 @@ from .widgets import ExtendedFileInput
 
 class ExtendedSelectField(SelectField):
 
-    def __init__(self, model, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, model, coerce=int, **kwargs):
+        super().__init__(coerce=coerce, **kwargs)
         options = {'model': get_model(model)}
         choices = [
             (obj.id, obj)
