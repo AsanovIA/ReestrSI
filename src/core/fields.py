@@ -1,35 +1,109 @@
+import datetime
+import itertools
+
 from markupsafe import Markup
+from wtforms import widgets
 from wtforms.fields.simple import FileField
 from wtforms.fields.choices import SelectField
 from wtforms.validators import ValidationError
 
 from src.db.repository import Repository
 from src.config import settings
-from .utils import BLANK_CHOICE, get_model
+from .utils import get_model, DATE_FORMAT
 from .widgets import ExtendedFileInput
 
 
-class ExtendedSelectField(SelectField):
+BLANK_CHOICE = [('', '---------')]
+ALL_CHOICE = [('all', 'Не важно')]
 
-    def __init__(self, model, coerce=int, **kwargs):
-        super().__init__(coerce=coerce, **kwargs)
-        options = {'model': get_model(model)}
-        choices = [
-            (obj.id, obj)
-            for obj in Repository.task_get_list(**options)
-        ]
-        self.choices = BLANK_CHOICE + choices
+
+def get_choices_for_model(model_name):
+    options = {'model': get_model(model_name)}
+    choices = [
+        (str(obj.id), obj)
+        for obj in Repository.task_get_list(**options)
+    ]
+    return choices
+
+
+class ExtendedSelectField(SelectField):
+    def __init__(self, model, **kwargs):
+        super().__init__(**kwargs)
+        self.choices = BLANK_CHOICE + get_choices_for_model(model)
+
+
+class FilterField:
+    widget = None
+
+    def __init__(self, **kwargs):
+        self.name = kwargs.get('name')
+        self.id = kwargs.get('id')
+
+    def __call__(self, **kwargs):
+        return self.widget(self, **kwargs)
+
+
+class FilterSelectField(FilterField):
+    widget = widgets.Select()
+
+    def __init__(self, model=None, **kwargs):
+        super().__init__(**kwargs)
+        self.data = kwargs.get('data')
+        choices = kwargs.get('choices')
+        if choices is None and model is not None:
+            choices = BLANK_CHOICE + get_choices_for_model(model)
+        self.choices = ALL_CHOICE + choices
+
+    def iter_choices(self):
+        if not self.choices:
+            choices = []
+        elif isinstance(self.choices, dict):
+            choices = list(itertools.chain.from_iterable(self.choices.values()))
+        else:
+            choices = self.choices
+
+        return self._choices_generator(choices)
+
+    def has_groups(self):
+        return False
+
+    def _choices_generator(self, choices):
+        if not choices:
+            _choices = []
+
+        elif isinstance(choices[0], (list, tuple)):
+            _choices = choices
+
+        else:
+            _choices = zip(choices, choices)
+
+        for value, label in _choices:
+            yield value, label, value == self.data
+
+
+class FilterDateField(FilterField):
+    widget = widgets.DateInput()
+    format = DATE_FORMAT
+
+    def __init__(self, data, **kwargs):
+        super().__init__(**kwargs)
+        try:
+            self.data = datetime.datetime.strptime(data, self.format).date()
+        except ValueError:
+            self.data = None
+
+    def _value(self):
+        return self.data and self.data.strftime(self.format) or ""
 
 
 class ExtendedFileField(FileField):
     widget = ExtendedFileInput()
     MAX_LENGTH: int = 100
 
-    def __init__(self, upload, description=None, **kwargs):
+    def __init__(self, description=None, **kwargs):
         if description is None:
             description = self.set_description()
         super().__init__(description=description, **kwargs)
-        self.upload = upload
 
     def set_description(self):
         descriptions = [

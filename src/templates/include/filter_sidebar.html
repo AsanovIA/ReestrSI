@@ -1,0 +1,25 @@
+<!-- Sidebar -->
+<button class="sticky toggle-nav-sidebar" id="toggle-nav-sidebar" aria-label="Переключить навигацию"></button>
+<nav class="sticky" id="nav-sidebar" aria-label="Sidebar">
+  <div class="module current-app">
+    <div id="reset-filter"><a href="{{ reset_filter_url }}">Сбросить фильтры</a></div>
+    <form method="get" name="filter">
+      {% for filter in filters %}
+        <table class="filter">
+          <caption>{{ filter.title }}</caption>
+          <tr>
+            {% if filter.type == 'date' %}
+              {% for field in filter %}
+                <td>{{ filter }}</td>
+              {% endfor %}
+            {% else %}
+              <td>{{ filter }}</td>
+            {% endif %}
+          </tr>
+        </table>
+      {% endfor %}
+      <input type="submit" class="default" value='Выбрать' name='filter'>
+    </form>
+  </div>
+</nav>
+<!-- END Sidebar -->

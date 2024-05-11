@@ -1,13 +1,15 @@
+import os
+
 from importlib import import_module
 from flask import abort, g, url_for
 from markupsafe import Markup
-from sqlalchemy import Boolean
+from sqlalchemy import Boolean, String
 from sqlalchemy.orm import InstrumentedAttribute
 from werkzeug.routing import BuildError
 
 from src.config import settings
 
-BLANK_CHOICE = [(0, '---------')]
+DATE_FORMAT = "%Y-%m-%d"
 EMPTY_VALUE_DISPLAY = '-'
 FIELDS_EXCLUDE = ['csrf_token']
 SETTINGS_APP_LIST = [
@@ -16,11 +18,48 @@ SETTINGS_APP_LIST = [
 ]
 
 
-def try_get_url(endpoint: str, **kwargs):
-    try:
-        return url_for(endpoint, **kwargs)
-    except BuildError:
-        return ''
+def boolean_icon(field_val):
+    display = {True: "yes", False: "no", None: "unknown"}[field_val]
+    url = url_for('static', filename="img/icon-%s.svg" % display)
+    return format_html('<img src="{}" alt="{}">', url, display)
+
+
+def display_for_field(value, field, empty_value_display):
+    if isinstance(field.type, Boolean):
+        return boolean_icon(value)
+    elif value is None:
+        return empty_value_display
+    elif (
+            isinstance(field.type, String)
+            and field.info.get('type') == 'FileField'
+    ):
+        upload = field.info.get('upload')
+        path_file = os.path.join(upload, value)
+        url = try_get_url('source.view_file', filename=path_file)
+        return format_html('<a href="{}" target="_blank">{}</a>', url, value)
+    else:
+        return display_for_value(value, empty_value_display)
+
+
+def display_for_value(value, empty_value_display, boolean=False):
+    if boolean:
+        return boolean_icon(value)
+    elif value is None:
+        return empty_value_display
+    elif isinstance(value, bool):
+        return str(value)
+    elif isinstance(value, (list, tuple)):
+        return ", ".join(str(v) for v in value)
+    elif isinstance(value, Markup):
+        return value
+    else:
+        return str(value)
+
+
+def format_html(format_string, *args, **kwargs):
+    args_safe = map(Markup.escape, args)
+    kwargs_safe = {k: Markup.escape(v) for (k, v) in kwargs.items()}
+    return Markup(format_string.format(*args_safe, **kwargs_safe))
 
 
 def get_app_settings(app_name: str):
@@ -30,19 +69,6 @@ def get_app_settings(app_name: str):
     except (ModuleNotFoundError, AttributeError):
         raise AttributeError(
             f'Отсутствует конфигурация для приложения {app_name}')
-
-
-def get_model(model_name: str):
-    for app_name in settings.APPS:
-        try:
-            app_settings = get_app_settings(app_name)
-            model = app_settings['models'].get(model_name.lower())
-            if model:
-                return model
-        except (ModuleNotFoundError, KeyError, AttributeError):
-            continue
-
-    abort(404)
 
 
 def get_form_class(model=None):
@@ -61,32 +87,57 @@ def get_form_class(model=None):
     abort(404)
 
 
-def label_for_field(name, form=None):
-    form = form or getattr(g, 'form', None)
-    try:
+def get_model(model_name: str):
+    model_name = model_name.lower().replace('_', '')
+    for app_name in settings.APPS:
         try:
-            field = getattr(g.model, name)
-            label = field.info.get('label')
-            if label is None:
-                field = getattr(g.model, f'{name}_id')
-                label = field.info['label']
-        except (AttributeError, KeyError):
-            field = getattr(form, name)
-            label = field.label.text
-    except AttributeError:
+            app_settings = get_app_settings(app_name)
+            model = app_settings['models'].get(model_name)
+            if model:
+                return model
+        except (ModuleNotFoundError, KeyError, AttributeError):
+            continue
+
+    abort(404)
+
+
+def get_suffix(text: str, n: int):
+    from src.core.suffixes import update_suffix
+
+    number = (
+        0 if n % 10 == 1 and n % 100 != 11 else 1
+        if 2 <= n % 10 <= 4 and (n % 100 < 12 or n % 100 > 14) else 2
+    )
+    new_text = update_suffix[(text, number)]
+
+    return new_text
+
+
+def label_for_field(name, form=None):
+    model = g.model
+    try:
+        field = getattr(model, name)
+        label = field.info.get('label')
+        if label is None:
+            field = getattr(model, f'{name}_id')
+            label = field.info['label']
+    except (AttributeError, KeyError):
         if name == "__str__":
-            label = str(g.model.Meta.verbose_name)
+            label = str(model.Meta.verbose_name)
         else:
             if callable(name):
                 attr = name
             elif hasattr(g.view, name):
                 attr = getattr(g.view, name)
-            elif hasattr(g.model, name):
-                attr = getattr(g.model, name)
+            elif hasattr(model, name):
+                attr = getattr(model, name)
+            elif hasattr(form, name):
+                attr = getattr(form, name)
+                return attr.label.text
             else:
                 raise AttributeError(
                     f'Не верно указано поле {name} в "fields_display" для '
-                    f'модели {g.model.__name__}'
+                    f'модели {model.__name__}'
                 )
 
             if hasattr(attr, "short_description"):
@@ -105,8 +156,6 @@ def label_for_field(name, form=None):
 
 def lookup_field(name, obj):
     try:
-        if '.' in name:
-            name = name.split('.')[-1]
         f = getattr(g.model, name)
         if not isinstance(f, InstrumentedAttribute):
             raise AttributeError
@@ -127,47 +176,47 @@ def lookup_field(name, obj):
     return f, attr, value
 
 
-def boolean_icon(field_val):
-    display = {True: "yes", False: "no", None: "unknown"}[field_val]
-    url = url_for('static', filename="img/icon-%s.svg" % display)
-    return format_html('<img src="{}" alt="{}">', url, display)
+def value_for_field(field_name, obj):
+    fields = field_name.split('.') if '.' in field_name else [field_name]
+    value = f = None
+    if fields and len(fields) > 1:
+        model = get_model(fields[-2])
+        f = getattr(model, fields[-1])
+    for field in fields:
+        value = getattr(obj, field, None)
+        if not value:
+            break
+        obj = value
+
+    if f and hasattr(f, 'type'):
+        value = display_for_field(value, f, EMPTY_VALUE_DISPLAY)
+
+    return value
 
 
-def display_for_field(value, type_field, empty_value_display):
-    if isinstance(type_field, Boolean):
-        return boolean_icon(value)
-    elif value is None:
-        return empty_value_display
-    else:
-        return display_for_value(value, empty_value_display)
+def try_get_url(endpoint: str, **kwargs):
+    try:
+        return url_for(endpoint, **kwargs)
+    except BuildError:
+        return ''
 
 
-def display_for_value(value, empty_value_display, boolean=False):
-    if boolean:
-        return boolean_icon(value)
-    elif value is None:
-        return empty_value_display
-    elif isinstance(value, bool):
-        return str(value)
-    elif isinstance(value, (list, tuple)):
-        return ", ".join(str(v) for v in value)
-    else:
-        return str(value)
-
-
-def format_html(format_string, *args, **kwargs):
-    args_safe = map(Markup.escape, args)
-    kwargs_safe = {k: Markup.escape(v) for (k, v) in kwargs.items()}
-    return Markup(format_string.format(*args_safe, **kwargs_safe))
-
-
-def get_suffix(text, n):
-    from src.core.suffixes import update_suffix
-
-    number = (
-        0 if n % 10 == 1 and n % 100 != 11 else 1
-        if 2 <= n % 10 <= 4 and (n % 100 < 12 or n % 100 > 14) else 2
-    )
-    new_text = update_suffix[(text, number)]
-
-    return new_text
+def upload_for_field(name: str):
+    model = g.model
+    try:
+        field = getattr(model, name)
+        if 'type' not in field.info:
+            raise KeyError(
+                f'отсутствует ключ "type" у атрибута '
+                f'{name} модели {model.__name__}'
+            )
+        return field.info['upload']
+    except AttributeError:
+        raise AttributeError(
+            f'отсутствует атрибут {name} модели {model.__name__}'
+        )
+    except KeyError:
+        raise KeyError(
+            f'отсутствует ключ "upload" у атрибута '
+            f'{name} модели {model.__name__}'
+        )

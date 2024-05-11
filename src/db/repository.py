@@ -15,11 +15,22 @@ def get_options_load(model, related=None):
             return
 
         for field_name in select_related:
-            if '.' in field_name:
+            field = getattr(model, field_name)
+            if hasattr(field, 'path_related'):
                 if related is None:
                     raise TypeError('Не определены зависимые модели')
-                fields_related = field_name.split('.')
-                if len(fields_related) == 3:
+                fields_related = field.path_related.split('.')
+
+                if len(fields_related) == 2:
+                    try:
+                        model_related = related[fields_related[0]]
+                    except KeyError as e:
+                        raise KeyError(f'Не получен ожидаемый ключ {e}')
+                    yield joinedload(
+                        getattr(model, fields_related[0])
+                    ).joinedload(getattr(model_related, fields_related[1]))
+
+                elif len(fields_related) == 3:
                     try:
                         model_related1 = related[fields_related[0]]
                         model_related2 = related[fields_related[1]]
@@ -33,20 +44,11 @@ def get_options_load(model, related=None):
                         getattr(model_related2, fields_related[2])
                     )
 
-                elif len(fields_related) == 2:
-                    try:
-                        model_related = related[fields_related[0]]
-                    except KeyError as e:
-                        raise KeyError(f'Не получен ожидаемый ключ {e}')
-                    yield joinedload(
-                        getattr(model, fields_related[0])
-                    ).joinedload(getattr(model_related, fields_related[1]))
-
                 else:
                     raise ('Программно не прописано получение более тройной '
                            'зависимости')
             else:
-                yield joinedload(getattr(model, field_name))
+                yield joinedload(field)
 
     return list(get_related_model())
 
@@ -89,14 +91,6 @@ class Repository:
                 session.commit()
 
     @classmethod
-    def task_count(cls, model=None):
-        model = model or g.model
-        with session_factory() as session:
-            result = session.query(model).count()
-
-        return result
-
-    @classmethod
     def task_exists(cls, filters, model=None):
         model = model or g.model
         with session_factory() as session:
@@ -114,15 +108,44 @@ class Repository:
             ordering: tuple = (),
             limit: int = 20,
             offset: int = 0,
+            sub_queries: Union[list[tuple], None] = None,
             **kwargs,
     ):
         model = model or g.model
         ordering = ordering or get_ordering(model)
 
         with session_factory() as session:
-            query = select(model)
+            query = select(model).select_from(model)
+
+            if sub_queries:
+                def get_subq(models, subq):
+                    if len(models) > 1:
+                        attr = getattr(
+                            models[-2], models.pop(-1).__name__.lower() + '_id'
+                        )
+                        subq = (
+                            session.query(models[-1].id)
+                            .filter(attr.in_(subq)).subquery()
+                        )
+                        subq = get_subq(models, subq)
+
+                    return subq
+
+                for sub_query in sub_queries:
+                    models, value = sub_query
+                    attr_root = getattr(
+                        model, models[0].__name__.lower() + '_id'
+                    )
+                    attr_value = getattr(models[-2], models.pop(-1) + '_id')
+                    subq = (
+                        session.query(models[-1].id)
+                        .filter(attr_value == value).subquery()
+                    )
+                    subq = get_subq(models, subq)
+                    query = query.filter(attr_root.in_(subq))
+
             if filters and isinstance(filters, Iterable):
-                query = select(model).filter(*filters)
+                query = query.filter(*filters)
             if ordering:
                 query = query.order_by(*ordering)
 
@@ -175,6 +198,7 @@ class Repository:
             session.flush()
             session.commit()
             g.object_id = obj.id
+            g.object = obj
 
     @classmethod
     def task_add_or_update_object(cls, obj):

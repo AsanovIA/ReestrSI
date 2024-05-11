@@ -3,12 +3,17 @@ from sqlalchemy.exc import NoResultFound
 
 from src.db.repository import Repository
 from src.core.mixins import ListMixin, ChangeMixin, AddMixin
-from src.core.utils import get_model, try_get_url
+from src.core.utils import get_model, try_get_url, format_html
 from src.service.models import *
 
 
 class SiMixin:
     model_name = 'si'
+
+    def get_model_related(self):
+        return {
+            'employee': get_model('employee'),
+        }
 
     def get_success_url(self):
         return try_get_url('.list_si')
@@ -17,16 +22,22 @@ class SiMixin:
 class ServiceMixin:
     model_name = 'service'
 
+    def get_model_related(self):
+        return {
+            'employee': get_model('employee'),
+        }
+
     def get_success_url(self):
         return try_get_url(f'.list_service')
 
 
-class ListSiView(ListMixin):
-    model_name = 'si'
+class ListSiView(SiMixin, ListMixin):
+    sidebar = 'filter_sidebar'
 
     def get_query(self, **kwargs):
         kwargs = super().get_query(**kwargs)
-        kwargs['model_related'] = {'employee': get_model('employee')}
+        kwargs.setdefault('model_related', self.get_model_related())
+
         return kwargs
 
     def get_add_url(self):
@@ -68,18 +79,8 @@ class ChangeSiView(SiMixin, ChangeMixin):
 
         return context
 
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        division = getattr(g.object.employee, 'division', None)
-        if division:
-            kwargs['division'] = g.object.employee.division
-        else:
-            kwargs['division'] = self.empty_value_display
-
-        return kwargs
-
     def get_object(self, model_related=None):
-        model_related = {'employee': get_model('employee')}
+        model_related = self.get_model_related()
         return super().get_object(model_related)
 
 
@@ -89,6 +90,7 @@ class AddSiView(SiMixin, AddMixin):
 
 class ListServiceView(ListMixin):
     model_name = 'service'
+    sidebar = 'filter_sidebar'
 
     def get_btn(self):
         return {}
@@ -98,10 +100,10 @@ class ListServiceView(ListMixin):
 
     def get_query(self, **kwargs):
         kwargs = super().get_query(**kwargs)
-        filters = [
-            g.model.is_out == False,
-        ]
-        kwargs.update(filters=filters)
+        filters = kwargs.get('filters', [])
+        filters.append(g.model.is_out == False)
+        kwargs['filters'] = filters
+
         return kwargs
 
 
@@ -133,26 +135,51 @@ class ChangeServiceView(ServiceMixin, ChangeMixin):
 class OutServiceView(ServiceMixin, ChangeMixin):
     form_class_name = 'OutServiceForm'
 
+    def g_init(self):
+        super().g_init()
+        g.object_si = g.object.si
+
     def get_btn(self):
         return {'btn_change': True, 'btn_text': 'Выдать'}
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        si = g.object.si
-        context['content_title'] = f'Выдача с обслуживания: {str(si)}'
+        context['content_title'] = f'Выдача с обслуживания: {str(g.object.si)}'
 
         return context
+
+    def get_object_url(self):
+        return try_get_url(
+            f'admin.si.change_si',
+            pk=g.object_si.id
+        )
 
     def pre_save(self, obj):
         obj.is_out = True
 
-        si = obj.si
+        si = g.object_si
         si.is_service = False
         si.date_last_service = obj.date_last_service
         si.date_next_service = obj.date_next_service
         si.certificate = obj.certificate
 
         return [obj, si]
+
+    def get_success_message(self):
+        obj = g.object_si
+        name_str = str(obj)
+        obj_url = self.get_object_url()
+        link_or_text = format_html(
+            '<a href="{}">{}</a>', obj_url, name_str
+        )
+        message = format_html(
+            '{} "{}" завершил{} обслуживание.',
+            obj.Meta.verbose_name,
+            link_or_text,
+            obj.Meta.action_suffix,
+        )
+
+        return message
 
     def object_save(self, obj):
         Repository.task_add_or_update_object(obj)
@@ -161,27 +188,57 @@ class OutServiceView(ServiceMixin, ChangeMixin):
 class AddServiceView(ServiceMixin, AddMixin):
     form_class_name = 'AddServiceForm'
 
+    def g_init(self):
+        super().g_init()
+        g.object_si = self.get_si()
+
     def get_btn(self):
         return {'btn_change': True, 'btn_text': 'Направить на обслуживание'}
 
+    def get_si(self):
+        return Repository.task_get_object(
+            self.pk, get_model('si'), self.get_model_related()
+        )
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        si = Repository.task_get_object(self.pk, model=get_model('si'))
-        context['content_title'] = f'Прием на обслуживание: {str(si)}'
+        context['content_title'] = f'Прием на обслуживание: {str(g.object_si)}'
 
         return context
+
+    def get_object_url(self):
+        return try_get_url(
+            f'admin.si.change_si',
+            pk=g.object_si.id
+        )
 
     def get_success_url(self):
         return try_get_url(f'.list_si')
 
     def pre_save(self, obj):
-        si = Repository.task_get_object(self.pk, model=get_model('si'))
+        si = g.object_si
         si.is_service = True
 
         obj.si_id = si.id
         obj.date_last_service = si.date_next_service
 
         return [obj, si]
+
+    def get_success_message(self):
+        obj = g.object_si
+        name_str = str(obj)
+        obj_url = self.get_object_url()
+        link_or_text = format_html(
+            '<a href="{}">{}</a>', obj_url, name_str
+        )
+        message = format_html(
+            '{} "{}" добавлен{} в список обслуживаемых.',
+            obj.Meta.verbose_name,
+            link_or_text,
+            obj.Meta.action_suffix,
+        )
+
+        return message
 
     def object_save(self, obj):
         Repository.task_add_or_update_object(obj)
@@ -190,14 +247,18 @@ class AddServiceView(ServiceMixin, AddMixin):
 class HistoryServiceView(ListMixin):
     model_name = 'service'
     fields_link = None
+    fields_display = [
+        'si', 'date_in_service', 'date_last_service', 'is_ready', 'is_out',
+        'date_next_service', 'certificate', 'note'
+    ]
 
     def get_btn(self):
         return {}
 
     def get_query(self, **kwargs):
         kwargs = super().get_query(**kwargs)
-        filters = [
-            g.model.si_id == self.pk,
-        ]
-        kwargs.update(filters=filters)
+        filters = kwargs.get('filters', [])
+        filters.append(g.model.si_id == self.pk)
+        kwargs['filters'] = filters
+
         return kwargs

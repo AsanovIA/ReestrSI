@@ -167,3 +167,25 @@
     width: 100%;
     margin-bottom: 20px;
 }
+
+#nav-sidebar #reset-filter {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 14px;
+    margin-bottom: 14px;
+}
+
+#nav-sidebar #reset-filter a {
+    background: var(--history-button-bg);
+    padding: 10px 40px;
+    border-radius: 4px;
+    color: var(--body-fg);
+}
+
+#nav-sidebar #reset-filter a:focus,
+#nav-sidebar #reset-filter a:hover,
+#nav-sidebar #reset-filter a:active {
+    background: var(--history-button-hover-bg);
+    text-decoration: none;
+}

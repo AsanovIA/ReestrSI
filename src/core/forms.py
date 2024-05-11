@@ -5,7 +5,9 @@ from flask_wtf import FlaskForm
 from werkzeug.utils import secure_filename
 
 from . import ExtendedFileField, ExtendedSelectField
-from .utils import FIELDS_EXCLUDE, try_get_url, label_for_field
+from .utils import (
+    FIELDS_EXCLUDE, label_for_field, try_get_url, upload_for_field
+)
 
 
 class SiteForm(FlaskForm):
@@ -32,6 +34,7 @@ class SiteForm(FlaskForm):
 
             if isinstance(field, ExtendedFileField):
                 self.is_multipart = True
+                field.upload = upload_for_field(field.name)
                 if field.object_data is None:
                     continue
                 path_file = os.path.join(field.upload, field.object_data)
@@ -40,10 +43,10 @@ class SiteForm(FlaskForm):
             #  Установка выбранных значений в Select формы
             if isinstance(
                     field, ExtendedSelectField) and not field.is_readonly:
-                value = self.data[field.name]
-                if value is None:
-                    value = getattr(obj, f'{field.name}_id', None)
-                field.data = value
+                value = getattr(obj, f'{field.name}_id', None)
+                if request.method == 'POST':
+                    value = self.data[field.name]
+                field.data = str(value)
 
     def contents(self, field):
         from sqlalchemy.orm import Relationship
@@ -55,14 +58,15 @@ class SiteForm(FlaskForm):
             f, attr, value = lookup_field(field.name, self.instance)
         except (AttributeError, ValueError):
             result_repr = EMPTY_VALUE_DISPLAY
-            if field.data is not None:
-                result_repr = field.data
         else:
             if f is None:
                 if getattr(attr, "boolean", False):
                     result_repr = boolean_icon(value)
                 else:
-                    result_repr = value
+                    if hasattr(value, "__html__"):
+                        result_repr = value
+                    else:
+                        result_repr = str(value)
             else:
                 if (
                     isinstance(f.property, Relationship)
@@ -71,7 +75,7 @@ class SiteForm(FlaskForm):
                     result_repr = str(value)
                 else:
                     result_repr = display_for_field(
-                        value, f.type, EMPTY_VALUE_DISPLAY
+                        value, f, EMPTY_VALUE_DISPLAY
                     )
 
         return result_repr
@@ -107,7 +111,7 @@ class SiteForm(FlaskForm):
                 filename = secure_filename(request.files[field.name].filename)
                 if (
                         filename
-                        and getattr(instance, field.name)
+                        and hasattr(instance, field.name)
                         and filename != getattr(instance, field.name)
                         or f'{field.name}_clear' in request.form
                 ):
@@ -116,7 +120,7 @@ class SiteForm(FlaskForm):
 
             elif isinstance(field, ExtendedSelectField):
                 value = self.data[field.name]
-                value = value if value != 0 else None
+                value = int(value) if value != '' else None
                 if value != getattr(instance, f'{field.name}_id'):
                     changed_fields.append(field)
                 setattr(instance, f'{field.name}_id', value)

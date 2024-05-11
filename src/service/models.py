@@ -4,7 +4,7 @@ from typing import Optional
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.db.database import Base, BasePK
-from src.core.utils import EMPTY_VALUE_DISPLAY
+from src.core.utils import value_for_field
 
 
 class Si(BasePK, Base):
@@ -69,7 +69,11 @@ class Si(BasePK, Base):
     date_next_service: Mapped[datetime.date] = mapped_column(
         info={'label': 'Дата следующего обслуживания'})
     certificate: Mapped[Optional[str]] = mapped_column(
-        info={'label': 'Сертификат'})
+        info={
+            'label': 'Сертификат',
+            'type': 'FileField',
+            'upload': 'certificate/',
+        })
     is_service: Mapped[bool] = mapped_column(
         info={'label': 'На обслуживании'}, default=False)
 
@@ -109,7 +113,7 @@ class Si(BasePK, Base):
             'room_use_etalon',
             'room_delivery',
             'employee',
-            'employee.division',
+            'division',
         ]
         fields_display = [
             'group_si',
@@ -117,6 +121,8 @@ class Si(BasePK, Base):
             'type_si',
             'number',
             'description_method',
+            'description',
+            'method',
             'service_type',
             'service_interval',
             'etalon',
@@ -128,11 +134,29 @@ class Si(BasePK, Base):
             'control_vp',
             'room_delivery',
             'employee',
-            'employee.division',
-            'employee.email',
+            'division',
+            'email',
             'date_last_service',
             'date_next_service',
             'certificate',
+            'is_service',
+        ]
+        fields_filter = [
+            'group_si',
+            'name_si',
+            'type_si',
+            'description_method',
+            'service_type',
+            'service_interval',
+            'etalon',
+            'room_use_etalon',
+            'place',
+            'control_vp',
+            'room_delivery',
+            'employee',
+            'division',
+            'date_last_service',
+            'date_next_service',
             'is_service',
         ]
 
@@ -140,21 +164,23 @@ class Si(BasePK, Base):
         return self.number
 
     def division(self):
-        try:
-            value = str(self.employee.division)
-        except AttributeError:
-            value = EMPTY_VALUE_DISPLAY
-        return value
+        return self.employee.division
 
     def email(self):
-        try:
-            value = str(self.employee.email)
-        except AttributeError:
-            value = EMPTY_VALUE_DISPLAY
-        return value
+        return self.employee.email
+
+    def description(self):
+        return value_for_field('description_method.description', self)
+
+    def method(self):
+        return value_for_field('description_method.method', self)
 
     division.short_description = 'Подразделение'
     email.short_description = 'e-mail'
+    description.short_description = 'Описание СИ'
+    method.short_description = 'Методика поверки СИ'
+
+    division.path_related = 'employee.division'
 
 
 class Service(BasePK, Base):
@@ -174,12 +200,16 @@ class Service(BasePK, Base):
     date_next_service: Mapped[Optional[datetime.date]] = mapped_column(
         info={'label': 'Дата следующего обслуживания'})
     certificate: Mapped[Optional[str]] = mapped_column(
-        info={'label': 'Сертификат'})
-    note: Mapped[Optional[str]] = mapped_column(
-        info={'label': 'Примечание'})
+        info={
+            'label': 'Сертификат',
+            'type': 'FileField',
+            'upload': 'certificate/',
+        })
+    note: Mapped[Optional[str]] = mapped_column(info={'label': 'Примечание'})
     is_ready: Mapped[bool] = mapped_column(
         info={'label': 'Готовность к выдачи'}, default=False)
-    is_out: Mapped[bool] = mapped_column(default=False)
+    is_out: Mapped[bool] = mapped_column(
+        info={'label': 'Выдан'}, default=False)
 
     si: Mapped["Si"] = relationship(back_populates="service")
 
@@ -187,8 +217,13 @@ class Service(BasePK, Base):
         action_suffix = 'о'
         verbose_name = 'Обслуживание СИ'
         verbose_name_plural = 'Обслуживание СИ'
+        ordering = ('date_in_service',)
         select_related = ['si']
         fields_display = [
             'si', 'date_in_service', 'date_last_service', 'is_ready',
             'date_next_service', 'certificate', 'note'
         ]
+        fields_filter = ['is_ready']
+
+    def __str__(self):
+        return str(self.si)

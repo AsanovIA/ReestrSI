@@ -11,8 +11,8 @@ class BaseName(BasePK):
         info={'label': 'Наименование'}, unique=True)
 
     class Meta:
-        fields_display = ['name']
         ordering = ('name',)
+        fields_display = ['name']
 
     def __str__(self):
         return str(self.name)
@@ -105,9 +105,17 @@ class DescriptionMethod(BaseName, Base):
     __tablename__ = "description_method"
 
     description: Mapped[Optional[str]] = mapped_column(
-        info={'label': 'Описание СИ'})
+        info={
+            'label': 'Описание СИ',
+            'type': 'FileField',
+            'upload': 'description/',
+        })
     method: Mapped[Optional[str]] = mapped_column(
-        info={'label': 'Методика поверки СИ'})
+        info={
+            'label': 'Методика поверки СИ',
+            'type': 'FileField',
+            'upload': 'method/',
+        })
 
     si: Mapped["Si"] = relationship(back_populates="description_method")
 
@@ -116,6 +124,7 @@ class DescriptionMethod(BaseName, Base):
         verbose_name = 'Описание и методика поверки СИ'
         verbose_name_plural = 'Описания и методики поверки СИ'
         verbose_name_change = 'Описание и методику поверки СИ'
+        fields_display = ['name', 'description', 'method']
 
 
 class Division(BaseName, Base):
@@ -154,9 +163,9 @@ class Employee(BasePK, Base):
         action_suffix = 'о'
         verbose_name = 'Ответственное лицо'
         verbose_name_plural = 'Ответственные лица'
+        ordering = ('last_name', 'first_name', 'middle_name')
         select_related = ['division']
         fields_display = ['__str__', 'email', 'division']
-        ordering = ('last_name', 'first_name', 'middle_name')
 
     def get_full_name(self):
         # Формирование полного имени "Фамилия Имя Отчество"

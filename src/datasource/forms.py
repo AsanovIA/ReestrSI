@@ -26,8 +26,8 @@ class TypeSiForm(FieldNameForm):
 class DescriptionMethodForm(FieldNameForm):
     """Описание и методика поверки СИ"""
 
-    description = ExtendedFileField(upload='description/')
-    method = ExtendedFileField(upload='method/')
+    description = ExtendedFileField()
+    method = ExtendedFileField()
 
 
 class ServiceTypeForm(FieldNameForm):
@@ -72,4 +72,4 @@ class EmployeeForm(SiteForm):
             Unique(message='Сотрудник с таким e-mail уже существует')
         ]
     )
-    division = ExtendedSelectField(coerce=int, model='Division')
+    division = ExtendedSelectField(model='Division')
