@@ -2,8 +2,9 @@ from flask import jsonify, request
 from flask.views import View
 from sqlalchemy.exc import NoResultFound
 
+from src.core.constants import EMPTY_VALUE_DISPLAY
 from src.db.repository import Repository
-from src.core.utils import EMPTY_VALUE_DISPLAY, display_for_field, get_model
+from src.core.utils import display_for_field, get_model
 
 
 class ValueChangeView(View):

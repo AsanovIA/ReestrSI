@@ -5,6 +5,29 @@ from src.service.views import ListSiView
 class ListObjectView(ListSiView):
     fields_link = None
     decorators = []
+    fields_filter = [
+        'group_si',
+        'name_si',
+        'type_si',
+        'service_type',
+        'service_interval',
+        'place',
+        'control_vp',
+        'room_delivery',
+        'employee',
+        'employee__division',
+        'date_last_service',
+        'date_next_service',
+        'is_service',
+    ]
+    fields_search = [
+        'group_si__name',
+        'name_si__name',
+        'type_si__name',
+        'number',
+        'year_production',
+        'nomenclature',
+    ]
 
     def get_fields_display(self):
         fields_display = [

@@ -116,9 +116,10 @@
 
 #nav-sidebar .current-app form > input {
     width: 80%;
-    position: absolute;
+/*    position: absolute;*/
     left: 10%;
     background-color: var(--sidebar-bt);
+    margin: 0px 10%;
 /*    color: var(--body-fg);*/
 }
 
@@ -172,8 +173,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-top: 14px;
-    margin-bottom: 14px;
+    margin: 14px;
 }
 
 #nav-sidebar #reset-filter a {

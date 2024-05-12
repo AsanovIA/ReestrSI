@@ -3,39 +3,41 @@
 {{ super() }}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/changelists.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/paginator.css') }}">
+<script src="{{ url_for('static', filename='js/serialize_forms.js') }}" defer></script>
 {% endblock extrastyle %}
 {% block content %}
 <div id="content-main">
-    <div id="changelist" class="module">
-        <div class="changelist-form-container">
-            <form id="changelist-form" method="post" novalidate>
-                {% include 'include/submit_row.html' %}
-                {% if content_title %}<h1>{{ content_title }}</h1>{% endif %}
-                {% block header_change_list %}{% endblock %}
-                <div class="results">
-                    {{ pagination.info }}
-                    {{ pagination.links }}
-                    <table id="result_list">
-                        <thead>
-                            <tr>
-                                {% for header in result_headers %}
-                                <th scope="col">
-                                   <div class="text"><span>{{ header.text|capitalize }}</span></div>
-                                   <div class="clear"></div>
-                                </th>
-                                {% endfor %}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for result in results %}
-                                <tr>{% for item in result %}{{ item }}{% endfor %}</tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                    {{ pagination.links }}
-                </div>
-            </form>
+  <div id="changelist" class="module">
+    <div class="changelist-form-container">
+      {% include 'include/search_form.html' %}
+      <form id="changelist-form" method="post" novalidate>
+        {% include 'include/submit_row.html' %}
+        {% if content_title %}<h1>{{ content_title }}</h1>{% endif %}
+        {% block header_change_list %}{% endblock %}
+        <div class="results">
+          {{ pagination.info }}
+          {{ pagination.links }}
+          <table id="result_list">
+            <thead>
+              <tr>
+                {% for header in result_headers %}
+                <th scope="col">
+                 <div class="text"><span>{{ header.text|capitalize }}</span></div>
+                 <div class="clear"></div>
+                </th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for result in results %}
+                <tr>{% for item in result %}{{ item }}{% endfor %}</tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {{ pagination.links }}
         </div>
+      </form>
     </div>
+  </div>
 </div>
 {% endblock content %}

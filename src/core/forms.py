@@ -23,7 +23,7 @@ class SiteForm(FlaskForm):
             if field.name not in FIELDS_EXCLUDE:
                 self.fields.append(field.name)
                 #  Установка label полей формы
-                field.label.text = label_for_field(field.name, self) + ':'
+                field.label.text = label_for_field(field.name, form=self) + ':'
             if getattr(field.flags, 'required', None):
                 field.label_class = {'class': 'required'}
             else:
@@ -50,7 +50,7 @@ class SiteForm(FlaskForm):
 
     def contents(self, field):
         from sqlalchemy.orm import Relationship
-        from src.core.utils import (
+        from src.core import (
             boolean_icon, lookup_field, display_for_field, EMPTY_VALUE_DISPLAY
         )
 

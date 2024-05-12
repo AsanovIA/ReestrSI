@@ -1,40 +1,55 @@
 from flask import g, request
 from sqlalchemy import Boolean, Date
-from sqlalchemy.orm import Relationship, InstrumentedAttribute
+from sqlalchemy.orm import Relationship
 
-from src.core.exceptions import FieldDoesNotExist
+from src.core.constants import FILTER_SUFFIX, LOOKUP_SEP
 from src.core.fields import FilterSelectField, FilterDateField
-from src.core.utils import label_for_field, get_model
+from src.core.utils import label_for_field
 
 
 class FilterForm:
     def __init__(self):
         self.filters = []
         relation_filters, boolean_filters, date_filters = [], [], []
-        model = g.model
-        for field_name in g.fields_filter:
-            if field_name not in g.fields_display:
-                continue
+        for name in g.fields_filter:
+            model = g.model
+            field_name = name
+            if LOOKUP_SEP in name:
+                lookup_fields = name.split(LOOKUP_SEP)
+                for index, path_part in enumerate(lookup_fields):
+                    field = getattr(model, path_part)
+                    field_name = path_part
+                    if (
+                            isinstance(field.property, Relationship)
+                            and index < len(lookup_fields) - 1
+                    ):
+                        model = field.property.entity.class_
 
             field = getattr(model, field_name)
-            if not isinstance(field, InstrumentedAttribute):
-                if hasattr(field, 'path_related'):
-                    names = field.path_related.split('.')
-                    related_model = get_model(names[-2])
-                    field = getattr(related_model, names[-1])
-                else:
-                    raise FieldDoesNotExist(
-                        f'Невозможно определить фильтр для {field.__name__}'
-                    )
+            title = label_for_field(field_name, model=field.class_)
+
+            filter_name = '%s__%s' % (name, FILTER_SUFFIX)
+            id = '%s__id' % name
+            data = request.args.get(filter_name)
+            kwargs = {
+                'field_name': name,
+                'field': field,
+                'title': title,
+                'options': {
+                    'name': filter_name,
+                    'id': id,
+                    'data': data,
+                }
+            }
 
             if isinstance(field.property, Relationship):
-                filter_ = RelatedListFilter(field_name, field)
+                filter_ = RelatedListFilter(**kwargs)
                 relation_filters.append(filter_)
             elif isinstance(field.type, Boolean):
-                filter_ = BooleanListFilter(field_name)
+                filter_ = BooleanListFilter(**kwargs)
                 boolean_filters.append(filter_)
             elif isinstance(field.type, Date):
-                filter_ = DateListFilter(field_name)
+                filter_ = DateListFilter(**kwargs)
                 date_filters.append(filter_)
             else:
                 raise Exception(f'Фильтра для {field.key} нет')
@@ -48,16 +63,9 @@ class FilterForm:
 class ListFilter:
     field = None
 
-    def __init__(self, field_name):
-        self.title = label_for_field(field_name)
-        name = '%s__exact' % field_name
-        id = '%s__id' % field_name
-        data = request.args.get(name)
-        self.options = {
-            'name': name,
-            'id': id,
-            'data': data,
-        }
+    def __init__(self, title, options, **kwargs):
+        self.title = title
+        self.options = options
 
     def __str__(self):
         return self.field()
@@ -67,16 +75,16 @@ class ListFilter:
 
 
 class RelatedListFilter(ListFilter):
-    def __init__(self, field_name, field):
-        super().__init__(field_name)
+    def __init__(self, field, **kwargs):
+        super().__init__(**kwargs)
         self.type = 'select'
         self.options.update(model=field.property.argument)
         self.field = FilterSelectField(**self.options)
 
 
 class BooleanListFilter(ListFilter):
-    def __init__(self, field_name):
-        super().__init__(field_name)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.type = 'boolean'
         choices = [('1', 'Да'), ('0', 'Нет')]
         self.options.update(choices=choices)
@@ -84,17 +92,17 @@ class BooleanListFilter(ListFilter):
 
 
 class DateListFilter(ListFilter):
-    def __init__(self, field_name):
-        super().__init__(field_name)
+    def __init__(self, field_name, **kwargs):
+        super().__init__(**kwargs)
         self.type = 'date'
         self.fields = []
         for suffix in ['__begin', '__end']:
             field_name_suffix = field_name + suffix
-            name = '%s__exact' % field_name_suffix
+            filter_name = '%s__%s' % (field_name_suffix, FILTER_SUFFIX)
             id = '%s__id' % field_name_suffix
-            data = request.args.get(name, '')
+            data = request.args.get(filter_name, '')
             self.options.update({
-                'name': name,
+                'name': filter_name,
                 'id': id,
                 'data': data
             })

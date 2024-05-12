@@ -12,7 +12,8 @@ class BaseName(BasePK):
 
     class Meta:
         ordering = ('name',)
-        fields_display = ['name']
+        fields_display = ('name',)
+        fields_search = ('name',)
 
     def __str__(self):
         return str(self.name)
@@ -124,7 +125,7 @@ class DescriptionMethod(BaseName, Base):
         verbose_name = 'Описание и методика поверки СИ'
         verbose_name_plural = 'Описания и методики поверки СИ'
         verbose_name_change = 'Описание и методику поверки СИ'
-        fields_display = ['name', 'description', 'method']
+        fields_display = ('name', 'description', 'method')
 
 
 class Division(BaseName, Base):
@@ -164,8 +165,11 @@ class Employee(BasePK, Base):
         verbose_name = 'Ответственное лицо'
         verbose_name_plural = 'Ответственные лица'
         ordering = ('last_name', 'first_name', 'middle_name')
-        select_related = ['division']
-        fields_display = ['__str__', 'email', 'division']
+        select_related = ('division',)
+        fields_display = ('__str__', 'email', 'division')
+        fields_search = (
+            'last_name', 'first_name', 'middle_name', 'division__name'
+        )
 
     def get_full_name(self):
         # Формирование полного имени "Фамилия Имя Отчество"

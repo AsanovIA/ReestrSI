@@ -7,19 +7,18 @@ from flask import (
 )
 from flask.views import View
 from flask_paginate import Pagination, get_page_parameter
-from sqlalchemy import Boolean
 from sqlalchemy.exc import NoResultFound
-from sqlalchemy.orm import Relationship, InstrumentedAttribute
+from sqlalchemy.orm import Relationship
 from werkzeug.routing import BuildError
 from werkzeug.utils import secure_filename
 
 from src.config import settings
-from src.core.filters import FilterForm
 from src.db.repository import Repository
+from src.core.constants import EMPTY_VALUE_DISPLAY, LOOKUP_SEP, SEARCH_VAR
+from src.core.filters import FilterForm
+from src.core.queries import Query
 from src.core.media import Media
 from src.core.utils import (
-    DATE_FORMAT,
-    EMPTY_VALUE_DISPLAY,
     display_for_field,
     display_for_value,
     format_html,
@@ -30,6 +29,8 @@ from src.core.utils import (
     lookup_field,
     try_get_url,
 )
+
+PAGE_VAR = "p"
 
 
 class SiteMixin(View):
@@ -223,6 +224,7 @@ class ListMixin(SiteMixin):
             g.fields_link = getattr(g.model.Meta, 'fields_link', ())
 
         g.fields_filter = getattr(g.model.Meta, 'fields_filter', [])
+        g.fields_search = getattr(g.model.Meta, 'fields_search', [])
 
     def get_fields_display(self):
         return self.fields_display
@@ -243,10 +245,10 @@ class ListMixin(SiteMixin):
         page = request.args.get(get_page_parameter(), type=int, default=1)
         per_page = self.per_page
         offset = (page - 1) * per_page
-        filters = {'limit': per_page, 'offset': offset}
-        result_list = self.get_queryset(**filters)
+        query = Query(limit=per_page, offset=offset)
+        result_list = self.get_queryset(query)
         context['pagination'] = self.get_paginator(
-            page=page, per_page=per_page, total=len(result_list)
+            page=page, per_page=per_page
         )
         context['result_headers'] = list(self.get_result_headers())
         context['results'] = list(self.get_results(result_list))
@@ -255,6 +257,17 @@ class ListMixin(SiteMixin):
             context['filters'] = FilterForm()
             context['reset_filter_url'] = self.get_reset_filter_url()
 
+        if g.fields_search:
+            params = dict(request.args)
+            if PAGE_VAR in params:
+                del params[PAGE_VAR]
+            context['search'] = {
+                'name': SEARCH_VAR,
+                'query': request.args.get(SEARCH_VAR) or "",
+                'help_text': self.get_search_help_text(),
+                'params': params
+            }
+
         try:
             context['title'] = g.model.Meta.verbose_name_plural
         except AttributeError:
@@ -262,71 +275,32 @@ class ListMixin(SiteMixin):
 
         return context
 
-    def get_query(self, **kwargs):
-        if not g.fields_filter or not request.args:
-            return kwargs
+    def get_search_help_text(self):
+        text = 'Значение будет просмотрено в: '
+        labels = []
+        for field_name in g.fields_search:
+            label = label_for_field(field_name.split(LOOKUP_SEP)[0])
+            if f'"{label}"' not in labels:
+                labels.append(f'"{label}"')
+        text += ', '.join(labels)
+        return text + '.'
 
-        filters = kwargs.get('filters', [])
-        sub_queries = kwargs.get('sub_queries', [])
-        params = request.args
-        model = g.model
+    def get_query(self, query):
+        if not request.args:
+            return query
+        query += Query(params=request.args)
+        return query
 
-        for param, value in params.items():
-            if 'exact' not in param or value == 'all':
-                continue
-            args = param.split('__')
-            name = args[0]
-            try:
-                field = getattr(model, name + '_id')
-                if value:
-                    filter_ = field == int(value)
-                else:
-                    filter_ = field == None
-            except AttributeError:
-                field = getattr(g.model, name)
-                if (
-                        not isinstance(field, InstrumentedAttribute)
-                        and hasattr(field, 'path_related')
-                ):
-                    models = []
-                    model_names = field.path_related.split('.')
-                    for index, model_name in enumerate(model_names):
-                        if len(model_names) - 1 == index:
-                            models.append(model_name)
-                        else:
-                            models.append(get_model(model_name))
-                    sub_queries.append((models, int(value)))
-                    continue
-
-                if isinstance(field.type, Boolean):
-                    filter_ = field == int(value)
-
-                elif not value:
-                    continue
-
-                else:
-                    value = datetime.datetime.strptime(value, DATE_FORMAT).date()
-                    if args[1] == 'begin':
-                        filter_ = field >= value
-                    else:
-                        filter_ = field <= value
-
-            filters.append(filter_)
-
-        if filters:
-            kwargs.update(filters=filters)
-        if sub_queries:
-            kwargs.update(sub_queries=sub_queries)
-
-        return kwargs
-
-    def get_queryset(self, **kwargs):
-        queryset = Repository.task_get_list(**self.get_query(**kwargs))
+    def get_queryset(self, query):
+        queryset = Repository.task_get_list(self.get_query(query))
         return queryset
 
     @classmethod
     def get_paginator(cls, **kwargs) -> Pagination:
+        total = Repository.task_count()
         return Pagination(
+            page_parameter=PAGE_VAR,
+            total=total,
             display_msg="показано <b>{start} - {end}</b> записей из"
                         " <b>{total}</b>",
             search_msg='',
@@ -471,12 +445,9 @@ class FormMixin(SiteMixin):
 
         return form
 
-    def get_object(self, related_model=None):
+    def get_object(self):
         try:
-            return Repository.task_get_object(
-                filters=self.pk,
-                related_model=related_model,
-            )
+            return Repository.task_get_object(filters=self.pk)
         except NoResultFound:
             abort(404)
 
@@ -582,7 +553,7 @@ class ChangeMixin(FormMixin):
 class AddMixin(FormMixin):
     action = 'add'
 
-    def get_object(self, related_model=None):
+    def get_object(self):
         return g.model()
 
     def get_success_continue_url(self):

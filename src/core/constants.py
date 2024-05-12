@@ -1,0 +1,5 @@
+EMPTY_VALUE_DISPLAY = '-'
+FILTER_SUFFIX = "exact"
+LOOKUP_SEP = "__"
+ALL_VAR = "all"
+SEARCH_VAR = "q"

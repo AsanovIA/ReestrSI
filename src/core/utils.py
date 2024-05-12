@@ -8,9 +8,9 @@ from sqlalchemy.orm import InstrumentedAttribute
 from werkzeug.routing import BuildError
 
 from src.config import settings
+from src.core.constants import EMPTY_VALUE_DISPLAY
 
 DATE_FORMAT = "%Y-%m-%d"
-EMPTY_VALUE_DISPLAY = '-'
 FIELDS_EXCLUDE = ['csrf_token']
 SETTINGS_APP_LIST = [
     'datasource',
@@ -22,6 +22,11 @@ def boolean_icon(field_val):
     display = {True: "yes", False: "no", None: "unknown"}[field_val]
     url = url_for('static', filename="img/icon-%s.svg" % display)
     return format_html('<img src="{}" alt="{}">', url, display)
+
+
+def convert_quoted_string(s):
+    quote = s[0]
+    return s[1:-1].replace(r"\%s" % quote, quote).replace(r"\\", "\\")
 
 
 def display_for_field(value, field, empty_value_display):
@@ -113,8 +118,8 @@ def get_suffix(text: str, n: int):
     return new_text
 
 
-def label_for_field(name, form=None):
-    model = g.model
+def label_for_field(name, model=None, form=None):
+    model = model or g.model
     try:
         field = getattr(model, name)
         label = field.info.get('label')
@@ -177,7 +182,7 @@ def lookup_field(name, obj):
 
 
 def value_for_field(field_name, obj):
-    fields = field_name.split('.') if '.' in field_name else [field_name]
+    fields = field_name.split('__') if '__' in field_name else [field_name]
     value = f = None
     if fields and len(fields) > 1:
         model = get_model(fields[-2])

@@ -102,7 +102,8 @@ class Si(BasePK, Base):
         action_suffix = 'о'
         verbose_name = 'Средство измерения'
         verbose_name_plural = 'Средства измерения'
-        select_related = [
+
+        select_related = (
             'group_si',
             'name_si',
             'type_si',
@@ -113,9 +114,9 @@ class Si(BasePK, Base):
             'room_use_etalon',
             'room_delivery',
             'employee',
-            'division',
-        ]
-        fields_display = [
+            'employee__division',
+        )
+        fields_display = (
             'group_si',
             'name_si',
             'type_si',
@@ -140,8 +141,8 @@ class Si(BasePK, Base):
             'date_next_service',
             'certificate',
             'is_service',
-        ]
-        fields_filter = [
+        )
+        fields_filter = (
             'group_si',
             'name_si',
             'type_si',
@@ -154,11 +155,30 @@ class Si(BasePK, Base):
             'control_vp',
             'room_delivery',
             'employee',
-            'division',
+            'employee__division',
             'date_last_service',
             'date_next_service',
             'is_service',
-        ]
+        )
+        fields_search = (
+            'group_si__name',
+            'name_si__name',
+            'type_si__name',
+            'number',
+            'description_method__name',
+            # 'service_type__name',
+            # 'service_interval__name',
+            'category_etalon',
+            'year_production',
+            'nomenclature',
+            # 'room_use_etalon__name',
+            # 'place__name',
+            # 'room_delivery__name',
+            # 'employee__last_name',
+            # 'employee__first_name',
+            # 'employee__middle_name',
+            # 'employee__division__name',
+        )
 
     def __str__(self):
         return self.number
@@ -170,17 +190,15 @@ class Si(BasePK, Base):
         return self.employee.email
 
     def description(self):
-        return value_for_field('description_method.description', self)
+        return value_for_field('description_method__description', self)
 
     def method(self):
-        return value_for_field('description_method.method', self)
+        return value_for_field('description_method__method', self)
 
     division.short_description = 'Подразделение'
     email.short_description = 'e-mail'
     description.short_description = 'Описание СИ'
     method.short_description = 'Методика поверки СИ'
-
-    division.path_related = 'employee.division'
 
 
 class Service(BasePK, Base):
@@ -218,12 +236,13 @@ class Service(BasePK, Base):
         verbose_name = 'Обслуживание СИ'
         verbose_name_plural = 'Обслуживание СИ'
         ordering = ('date_in_service',)
-        select_related = ['si']
-        fields_display = [
+        select_related = ('si',)
+        fields_display = (
             'si', 'date_in_service', 'date_last_service', 'is_ready',
             'date_next_service', 'certificate', 'note'
-        ]
-        fields_filter = ['is_ready']
+        )
+        fields_filter = ('is_ready',)
+        fields_search = ('si__number',)
 
     def __str__(self):
         return str(self.si)

@@ -3,7 +3,7 @@
 <nav class="sticky" id="nav-sidebar" aria-label="Sidebar">
   <div class="module current-app">
     <div id="reset-filter"><a href="{{ reset_filter_url }}">Сбросить фильтры</a></div>
-    <form method="get" name="filter">
+    <form id="changelist-filter" method="get" name="filter">
       {% for filter in filters %}
         <table class="filter">
           <caption>{{ filter.title }}</caption>
@@ -18,7 +18,7 @@
           </tr>
         </table>
       {% endfor %}
-      <input type="submit" class="default" value='Выбрать' name='filter'>
+      <input type="submit" class="default" value='Выбрать'>
     </form>
   </div>
 </nav>

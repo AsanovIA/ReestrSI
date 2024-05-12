@@ -1,0 +1,18 @@
+{% if search %}
+<div id="toolbar">
+  <form id="changelist-search" method="get" role="search">
+    <div>
+      <label for="searchbar"><img src="{{ url_for('static', filename='img/search.svg') }}" alt="Search"></label>
+      <input type="text" size="40" name="{{ search.name }}" value="{{ search.query }}" id="searchbar" autofocus>
+      <input type="submit" value="Поиск" id="submit-search">
+    </div>
+    {% for pair in search.params.items() %}
+    {% if pair.0 != search.name %}<input type="hidden" name="{{ pair.0 }}" value="{{ pair.1 }}">{% endif %}
+    {% endfor %}
+    {% if search.help_text %}
+      <br class="clear">
+      <div class="help" id="searchbar_helptext">{{ search.help_text }}</div>
+    {% endif %}
+  </form>
+</div>
+{% endif %}

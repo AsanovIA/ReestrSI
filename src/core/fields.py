@@ -9,12 +9,13 @@ from wtforms.validators import ValidationError
 
 from src.db.repository import Repository
 from src.config import settings
-from .utils import get_model, DATE_FORMAT
+from . import ALL_VAR
+from .utils import DATE_FORMAT, get_model
 from .widgets import ExtendedFileInput
 
 
 BLANK_CHOICE = [('', '---------')]
-ALL_CHOICE = [('all', 'Не важно')]
+ALL_CHOICE = [(ALL_VAR, 'Не важно')]
 
 
 def get_choices_for_model(model_name):

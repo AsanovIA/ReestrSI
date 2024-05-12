@@ -25,9 +25,10 @@ class UserProfile(BasePK, Base):
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
         verbose_name_change = 'Пользователя'
-        fields_display = [
+        fields_display = (
             'username', 'get_full_name', 'email', 'is_active', 'date_joined',
-        ]
+        )
+        fields_search = ('username', 'last_name', 'first_name', 'middle_name')
 
     def __repr__(self):
         return self.username

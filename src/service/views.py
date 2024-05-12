@@ -1,6 +1,7 @@
 from flask import g
 from sqlalchemy.exc import NoResultFound
 
+from src.core.queries import Query
 from src.db.repository import Repository
 from src.core.mixins import ListMixin, ChangeMixin, AddMixin
 from src.core.utils import get_model, try_get_url, format_html
@@ -10,11 +11,6 @@ from src.service.models import *
 class SiMixin:
     model_name = 'si'
 
-    def get_model_related(self):
-        return {
-            'employee': get_model('employee'),
-        }
-
     def get_success_url(self):
         return try_get_url('.list_si')
 
@@ -22,23 +18,12 @@ class SiMixin:
 class ServiceMixin:
     model_name = 'service'
 
-    def get_model_related(self):
-        return {
-            'employee': get_model('employee'),
-        }
-
     def get_success_url(self):
         return try_get_url(f'.list_service')
 
 
 class ListSiView(SiMixin, ListMixin):
     sidebar = 'filter_sidebar'
-
-    def get_query(self, **kwargs):
-        kwargs = super().get_query(**kwargs)
-        kwargs.setdefault('model_related', self.get_model_related())
-
-        return kwargs
 
     def get_add_url(self):
         return try_get_url('.add_si')
@@ -79,10 +64,6 @@ class ChangeSiView(SiMixin, ChangeMixin):
 
         return context
 
-    def get_object(self, model_related=None):
-        model_related = self.get_model_related()
-        return super().get_object(model_related)
-
 
 class AddSiView(SiMixin, AddMixin):
     pass
@@ -98,13 +79,10 @@ class ListServiceView(ListMixin):
     def get_url_for_result(self, result):
         return try_get_url(f'.change_{self.blueprint_name}', pk=result.id)
 
-    def get_query(self, **kwargs):
-        kwargs = super().get_query(**kwargs)
-        filters = kwargs.get('filters', [])
-        filters.append(g.model.is_out == False)
-        kwargs['filters'] = filters
-
-        return kwargs
+    def get_query(self, query):
+        query = super().get_query(query)
+        query += Query(filters=[g.model.is_out == False])
+        return query
 
 
 class ChangeServiceView(ServiceMixin, ChangeMixin):
@@ -196,9 +174,7 @@ class AddServiceView(ServiceMixin, AddMixin):
         return {'btn_change': True, 'btn_text': 'Направить на обслуживание'}
 
     def get_si(self):
-        return Repository.task_get_object(
-            self.pk, get_model('si'), self.get_model_related()
-        )
+        return Repository.task_get_object(self.pk, get_model('si'))
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -255,10 +231,7 @@ class HistoryServiceView(ListMixin):
     def get_btn(self):
         return {}
 
-    def get_query(self, **kwargs):
-        kwargs = super().get_query(**kwargs)
-        filters = kwargs.get('filters', [])
-        filters.append(g.model.si_id == self.pk)
-        kwargs['filters'] = filters
-
-        return kwargs
+    def get_query(self, query):
+        query = super().get_query(query)
+        query += Query(filters=[g.model.si_id == self.pk])
+        return query

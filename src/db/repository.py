@@ -7,7 +7,7 @@ from typing import Union
 from src.db.database import Base, engine, session_factory
 
 
-def get_options_load(model, related=None):
+def get_options_load(model):
     def get_related_model():
         try:
             select_related = model.Meta.select_related
@@ -15,40 +15,22 @@ def get_options_load(model, related=None):
             return
 
         for field_name in select_related:
-            field = getattr(model, field_name)
-            if hasattr(field, 'path_related'):
-                if related is None:
-                    raise TypeError('Не определены зависимые модели')
-                fields_related = field.path_related.split('.')
-
-                if len(fields_related) == 2:
-                    try:
-                        model_related = related[fields_related[0]]
-                    except KeyError as e:
-                        raise KeyError(f'Не получен ожидаемый ключ {e}')
-                    yield joinedload(
-                        getattr(model, fields_related[0])
-                    ).joinedload(getattr(model_related, fields_related[1]))
-
-                elif len(fields_related) == 3:
-                    try:
-                        model_related1 = related[fields_related[0]]
-                        model_related2 = related[fields_related[1]]
-                    except KeyError as e:
-                        raise KeyError(f'Не получен ожидаемый ключ {e}')
-                    yield joinedload(
-                        getattr(model, fields_related[0])
-                    ).joinedload(
-                        getattr(model_related1, fields_related[1])
-                    ).joinedload(
-                        getattr(model_related2, fields_related[2])
-                    )
-
-                else:
-                    raise ('Программно не прописано получение более тройной '
-                           'зависимости')
+            try:
+                field = getattr(model, field_name)
+            except AttributeError:
+                lookup_fields = field_name.split("__")
+                lookup_model = model
+                for index, path_part in enumerate(lookup_fields):
+                    field = getattr(lookup_model, path_part)
+                    lookup_model = field.property.entity.class_
+                    if index == 0:
+                        join_load = joinedload(field)
+                    else:
+                        join_load = join_load.joinedload(field)
             else:
-                yield joinedload(field)
+                join_load = joinedload(field)
+
+            yield join_load
 
     return list(get_related_model())
 
@@ -91,6 +73,14 @@ class Repository:
                 session.commit()
 
     @classmethod
+    def task_count(cls, model=None):
+        model = model or g.model
+        with session_factory() as session:
+            result = session.query(model).count()
+
+        return result
+
+    @classmethod
     def task_exists(cls, filters, model=None):
         model = model or g.model
         with session_factory() as session:
@@ -100,59 +90,29 @@ class Repository:
         return result
 
     @classmethod
-    def task_get_list(
-            cls,
-            model=None,
-            model_related=None,
-            filters: Union[list, tuple, None] = None,
-            ordering: tuple = (),
-            limit: int = 20,
-            offset: int = 0,
-            sub_queries: Union[list[tuple], None] = None,
-            **kwargs,
-    ):
-        model = model or g.model
-        ordering = ordering or get_ordering(model)
+    def task_get_list(cls, query=None, model=None):
+        model = model or query.model
+        filters = query.filters if query else None
+        joins = query.joins if query else None
+        ordering = query.ordering if query else get_ordering(model)
+        limit = query.limit if query else None
+        offset = query.offset if query else None
 
         with session_factory() as session:
             query = select(model).select_from(model)
 
-            if sub_queries:
-                def get_subq(models, subq):
-                    if len(models) > 1:
-                        attr = getattr(
-                            models[-2], models.pop(-1).__name__.lower() + '_id'
-                        )
-                        subq = (
-                            session.query(models[-1].id)
-                            .filter(attr.in_(subq)).subquery()
-                        )
-                        subq = get_subq(models, subq)
-
-                    return subq
-
-                for sub_query in sub_queries:
-                    models, value = sub_query
-                    attr_root = getattr(
-                        model, models[0].__name__.lower() + '_id'
-                    )
-                    attr_value = getattr(models[-2], models.pop(-1) + '_id')
-                    subq = (
-                        session.query(models[-1].id)
-                        .filter(attr_value == value).subquery()
-                    )
-                    subq = get_subq(models, subq)
-                    query = query.filter(attr_root.in_(subq))
-
+            if joins and isinstance(joins, Iterable):
+                for j in joins:
+                    query = query.join(j)
             if filters and isinstance(filters, Iterable):
                 query = query.filter(*filters)
             if ordering:
                 query = query.order_by(*ordering)
-
-            options_load = get_options_load(model, related=model_related)
+            options_load = get_options_load(model)
             query = query.options(*options_load)
+            if limit:
+                query = query.offset(offset).limit(limit)
 
-            query = query.offset(offset).limit(limit)
             result_query = session.execute(query)
             result = result_query.unique().scalars().all()
 
@@ -163,7 +123,6 @@ class Repository:
             cls,
             filters: Union[dict, str, int],
             model=None,
-            related_model=None,
     ):
         model = model or g.model
 
@@ -178,7 +137,7 @@ class Repository:
         with session_factory() as session:
             query = select(model).filter_by(**filters)
 
-            options_load = get_options_load(model, related_model)
+            options_load = get_options_load(model)
             query = query.options(*options_load)
 
             result = session.execute(query).scalar_one()
