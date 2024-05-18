@@ -27,9 +27,13 @@ class GroupSi(BaseName, Base):
 
     class Meta(BaseName.Meta, Base.Meta):
         action_suffix = 'а'
-        verbose_name = 'Группа СИ'
-        verbose_name_plural = 'Группы СИ'
-        verbose_name_change = 'Группу СИ'
+        verbose_name = 'Группа СИ по областям и разделам областей измерений'
+        verbose_name_plural = (
+            'Группы СИ по областям и разделам областей измерений'
+        )
+        verbose_name_change = (
+            'Группу СИ по областям и разделам областей измерений'
+        )
 
 
 class NameSi(BaseName, Base):
@@ -107,7 +111,7 @@ class DescriptionMethod(BaseName, Base):
 
     description: Mapped[Optional[str]] = mapped_column(
         info={
-            'label': 'Описание СИ',
+            'label': 'Описание типа СИ',
             'type': 'FileField',
             'upload': 'description/',
         })
@@ -122,9 +126,9 @@ class DescriptionMethod(BaseName, Base):
 
     class Meta(BaseName.Meta, Base.Meta):
         action_suffix = 'ы'
-        verbose_name = 'Описание и методика поверки СИ'
-        verbose_name_plural = 'Описания и методики поверки СИ'
-        verbose_name_change = 'Описание и методику поверки СИ'
+        verbose_name = 'Описание типа и методика поверки СИ'
+        verbose_name_plural = 'Описания типа и методики поверки СИ'
+        verbose_name_change = 'Описание типа и методику поверки СИ'
         fields_display = ('name', 'description', 'method')
 
 
@@ -144,15 +148,15 @@ class Employee(BasePK, Base):
     """Ответственное лицо (сотрудник)"""
     __tablename__ = "employee"
 
-    last_name: Mapped[Optional[str_100]] = mapped_column(
+    last_name: Mapped[str_100] = mapped_column(
         info={'label': 'Фамилия'})
-    first_name: Mapped[str_100] = mapped_column(
+    first_name: Mapped[Optional[str_100]] = mapped_column(
         info={'label': 'Имя'})
     middle_name: Mapped[Optional[str_100]] = mapped_column(
         info={'label': 'Отчество'})
     email: Mapped[Optional[str]] = mapped_column(
         info={'label': 'e-mail'}, unique=True)
-    division_id: Mapped[int] = mapped_column(
+    division_id: Mapped[Optional[int]] = mapped_column(
         ForeignKey("division.id", ondelete="CASCADE"),
         info={'label': 'Подразделение'},
     )

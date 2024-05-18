@@ -11,9 +11,15 @@ class UserProfile(BasePK, Base):
 
     username: Mapped[str_100] = mapped_column(info={'label': 'Логин'})
     password: Mapped[str] = mapped_column(info={'label': 'Пароль'})
-    last_name: Mapped[str_100] = mapped_column(info={'label': 'Фамилия'})
-    first_name: Mapped[str_100] = mapped_column(info={'label': 'Имя'})
-    middle_name: Mapped[str_100] = mapped_column(info={'label': 'Отчество'})
+    last_name: Mapped[str_100] = mapped_column(
+        info={'label': 'Фамилия'}
+    )
+    first_name: Mapped[Optional[str_100]] = mapped_column(
+        info={'label': 'Имя'}
+    )
+    middle_name: Mapped[Optional[str_100]] = mapped_column(
+        info={'label': 'Отчество'}
+    )
     email: Mapped[Optional[str]] = mapped_column(
         info={'label': 'e-mail'}, unique=True)
     is_active: Mapped[bool] = mapped_column(

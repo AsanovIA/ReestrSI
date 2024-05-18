@@ -18,11 +18,11 @@ class DivWidget:
 class ExtendedFileInput(FileInput):
     def __call__(self, field, **kwargs):
         input_ = super().__call__(field, **kwargs)
-        if field.object_data:
+        if field.data:
             html = ('<div><div class="flex-container">'
                     '<label>сейчас используется: </label>'
                     '<a href="{}" target="_blank">{}</a></div>').format(
-                field.url, field.object_data
+                field.url, field.filename
             )
 
             if not getattr(field.flags, 'required', False):

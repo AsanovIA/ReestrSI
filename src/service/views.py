@@ -5,7 +5,6 @@ from src.core.queries import Query
 from src.db.repository import Repository
 from src.core.mixins import ListMixin, ChangeMixin, AddMixin
 from src.core.utils import get_model, try_get_url, format_html
-from src.service.models import *
 
 
 class SiMixin:
@@ -83,6 +82,9 @@ class ListServiceView(ListMixin):
         query = super().get_query(query)
         query += Query(filters=[g.model.is_out == False])
         return query
+
+    def get_count_list(self):
+        return Query(filters=[g.model.is_out == False])
 
 
 class ChangeServiceView(ServiceMixin, ChangeMixin):
@@ -235,3 +237,6 @@ class HistoryServiceView(ListMixin):
         query = super().get_query(query)
         query += Query(filters=[g.model.si_id == self.pk])
         return query
+
+    def get_count_list(self):
+        return Query(filters=[g.model.si_id == self.pk])

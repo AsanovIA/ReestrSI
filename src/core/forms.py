@@ -35,9 +35,14 @@ class SiteForm(FlaskForm):
             if isinstance(field, ExtendedFileField):
                 self.is_multipart = True
                 field.upload = upload_for_field(field.name)
-                if field.object_data is None:
-                    continue
-                path_file = os.path.join(field.upload, field.object_data)
+                if request.method == 'POST':
+                    value = getattr(field.data, 'filename', None)
+                else:
+                    value = field.data
+                if not value:
+                    return
+                field.filename = value
+                path_file = os.path.join(field.upload, field.filename)
                 field.url = try_get_url('source.view_file', filename=path_file)
 
             #  Установка выбранных значений в Select формы

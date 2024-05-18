@@ -1,4 +1,5 @@
 import os
+from functools import lru_cache
 
 from importlib import import_module
 from flask import abort, g, url_for
@@ -12,10 +13,10 @@ from src.core.constants import EMPTY_VALUE_DISPLAY
 
 DATE_FORMAT = "%Y-%m-%d"
 FIELDS_EXCLUDE = ['csrf_token']
-SETTINGS_APP_LIST = [
-    'datasource',
-    'users',
-]
+SETTINGS_APPS = {
+    'datasource': 'src.datasource',
+    'users': 'src.users',
+}
 
 
 def boolean_icon(field_val):
@@ -67,6 +68,7 @@ def format_html(format_string, *args, **kwargs):
     return Markup(format_string.format(*args_safe, **kwargs_safe))
 
 
+@lru_cache()
 def get_app_settings(app_name: str):
     try:
         module = import_module(f'{app_name}.config')

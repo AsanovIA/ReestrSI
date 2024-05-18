@@ -14,7 +14,9 @@ from werkzeug.utils import secure_filename
 
 from src.config import settings
 from src.db.repository import Repository
-from src.core.constants import EMPTY_VALUE_DISPLAY, LOOKUP_SEP, SEARCH_VAR
+from src.core.constants import (
+    EMPTY_VALUE_DISPLAY, LOOKUP_SEP, PAGE_VAR, SEARCH_VAR
+)
 from src.core.filters import FilterForm
 from src.core.queries import Query
 from src.core.media import Media
@@ -29,8 +31,6 @@ from src.core.utils import (
     lookup_field,
     try_get_url,
 )
-
-PAGE_VAR = "p"
 
 
 class SiteMixin(View):
@@ -138,16 +138,16 @@ class SiteMixin(View):
     @staticmethod
     def get_app_list(label=None):
         """Список моделей БД для заглавной страницы и боковой панели"""
-        from src.core.utils import SETTINGS_APP_LIST
+        from src.core.utils import SETTINGS_APPS
 
         app_list = []
-        settings_app_list = SETTINGS_APP_LIST
+        settings_app_list = SETTINGS_APPS
 
         if label:
-            settings_app_list = [label]
+            settings_app_list = {label: SETTINGS_APPS[label]}
 
-        for app_label in settings_app_list:
-            app_settings = get_app_settings(app_label)
+        for app_label, app_modul in settings_app_list.items():
+            app_settings = get_app_settings(app_modul)
             model_list = []
             for model_name, model in app_settings['models'].items():
                 kwargs = {'model_name': model_name}
@@ -242,13 +242,15 @@ class ListMixin(SiteMixin):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        page = request.args.get(get_page_parameter(), type=int, default=1)
+        page = request.args.get(
+            get_page_parameter(param=PAGE_VAR), type=int, default=1
+        )
         per_page = self.per_page
         offset = (page - 1) * per_page
         query = Query(limit=per_page, offset=offset)
         result_list = self.get_queryset(query)
         context['pagination'] = self.get_paginator(
-            page=page, per_page=per_page
+            **{PAGE_VAR: page, 'per_page': per_page}
         )
         context['result_headers'] = list(self.get_result_headers())
         context['results'] = list(self.get_results(result_list))
@@ -292,12 +294,14 @@ class ListMixin(SiteMixin):
         return query
 
     def get_queryset(self, query):
-        queryset = Repository.task_get_list(self.get_query(query))
+        queryset = Repository.task_get_list(q=self.get_query(query))
         return queryset
 
-    @classmethod
-    def get_paginator(cls, **kwargs) -> Pagination:
-        total = Repository.task_count()
+    def get_count_list(self):
+        return Query()
+
+    def get_paginator(self, **kwargs) -> Pagination:
+        total = Repository.task_count(q=self.get_count_list())
         return Pagination(
             page_parameter=PAGE_VAR,
             total=total,

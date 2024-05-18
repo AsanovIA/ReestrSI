@@ -8,7 +8,7 @@ from src.config import settings, NAMESUBD
 
 engine = create_engine(
     url=settings.DATABASE_URL,
-    echo=True,
+    # echo=True,
 )
 
 session_factory = sessionmaker(engine)

@@ -5,7 +5,7 @@ from src.core.utils import get_model
 
 def set_default_db():
     Repository.recreate_table()
-    table_name = ['NameSi', 'TypeSi']
+    table_name = []
     for model_name, value in default_data.items():
         model = get_model(model_name)
         if isinstance(value, str) and model_name in table_name:

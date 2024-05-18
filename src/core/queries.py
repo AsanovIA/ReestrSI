@@ -1,9 +1,9 @@
 import datetime
 
 from flask import g
-from sqlalchemy import Boolean, or_
+from sqlalchemy import Boolean, desc, or_
 from sqlalchemy.orm import Relationship
-from typing import Union
+from typing import Union, List, Tuple
 
 from src.core.constants import ALL_VAR, FILTER_SUFFIX, LOOKUP_SEP, SEARCH_VAR
 from src.core.exceptions import ModelDoesNotExist
@@ -17,9 +17,9 @@ class Query:
             self,
             model=None,
             params=None,
-            fields_filter: Union[list[str], tuple[str], None] = None,
-            fields_search: Union[list[str], tuple[str], None] = None,
-            ordering: Union[list[str], tuple[str], None] = None,
+            fields_filter: Union[List[str], Tuple[str], None] = None,
+            fields_search: Union[List[str], Tuple[str], None] = None,
+            ordering: Union[List[str], Tuple[str], None] = None,
             filters: Union[list, tuple, None] = None,
             joins: Union[list, None] = None,
             limit: int = None,
@@ -55,17 +55,31 @@ class Query:
 
     def get_ordering(self):
         try:
-            ordering = getattr(g, 'ordering')
+            fields = getattr(g, 'ordering')
         except AttributeError:
-            ordering = getattr(self.model.Meta, 'ordering', [])
-        return ordering
+            fields = getattr(self.model.Meta, 'ordering', [])
+
+        def create_ordering():
+            for field in fields:
+                asc_desc = True
+                if field.startswith("-"):
+                    asc_desc = False
+                    field = field[1:]
+                if not hasattr(self.model, field):
+                    continue
+                if asc_desc:
+                    yield getattr(self.model, field)
+                else:
+                    yield desc(getattr(self.model, field))
+
+        return list(create_ordering())
 
     def __add__(self, other):
         combined = Query()
         combined.model = self.model
-        combined.fields_filter = self.fields_filter
-        combined.fields_search = self.fields_search
-        combined.ordering = self.ordering
+        combined.fields_filter = self.fields_filter[:]
+        combined.fields_search = self.fields_search[:]
+        combined.ordering = self.ordering[:]
         combined.limit = self.limit
         combined.offset = self.offset
         combined.filters = self.filters[:]
@@ -83,7 +97,7 @@ class Query:
 
             elif FILTER_SUFFIX in param and value != ALL_VAR:
                 filter_name = param.rsplit(LOOKUP_SEP, maxsplit=1)[0]
-                if any(key in filter_name for key in ['begin', 'end']):
+                if any(filter_name.endswith(s) for s in ['__begin', '__end']):
                     if not value:
                         continue
                     self.query_filter_date(filter_name, value)

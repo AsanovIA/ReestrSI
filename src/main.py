@@ -13,19 +13,25 @@ from src.auth.router import router as router_auth
 from src.device.router import router as router_device
 from src.source.router import router as router_source
 
-app = Flask(__name__)
 
-app.config['SECRET_KEY'] = settings.SECRET_KEY
-app.config['WTF_I18N_ENABLED'] = False
-app.config['UPLOAD_FOLDER'] = 'uploads/'
+def create_app():
+    app = Flask(__name__)
 
-app.register_blueprint(router_admin)
-app.register_blueprint(router_auth)
-app.register_blueprint(router_device)
-app.register_blueprint(router_source)
+    app.config['SECRET_KEY'] = settings.SECRET_KEY
+    app.config['WTF_I18N_ENABLED'] = False
+    app.config['UPLOAD_FOLDER'] = 'uploads/'
 
-login_manager = LoginManager()
-login_manager.init_app(app)
+    app.register_blueprint(router_admin)
+    app.register_blueprint(router_auth)
+    app.register_blueprint(router_device)
+    app.register_blueprint(router_source)
+
+    return app
+
+
+app = create_app()
+
+login_manager = LoginManager(app)
 login_manager.login_view = 'auth.login'
 
 

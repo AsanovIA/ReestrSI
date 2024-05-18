@@ -3,6 +3,7 @@ from src.core.constants import (
     EMPTY_VALUE_DISPLAY,
     FILTER_SUFFIX,
     LOOKUP_SEP,
+    PAGE_VAR,
     SEARCH_VAR
 )
 from src.core.fields import (
@@ -30,7 +31,7 @@ from src.core.suffixes import update_suffix
 from src.core.utils import (
     DATE_FORMAT,
     FIELDS_EXCLUDE,
-    SETTINGS_APP_LIST,
+    SETTINGS_APPS,
     boolean_icon,
     display_for_field,
     display_for_value,

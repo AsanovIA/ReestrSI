@@ -12,8 +12,8 @@ class SiForm(SiteForm):
     group_si = ExtendedSelectField(
         model='GroupSi', validators=[DataRequired()]
     )
-    name_si = ExtendedSelectField(model='NameSi')
-    type_si = ExtendedSelectField(model='TypeSi')
+    name_si = ExtendedSelectField(model='NameSi', validators=[DataRequired()])
+    type_si = ExtendedSelectField(model='TypeSi', validators=[DataRequired()])
     number = StringField(
         validators=[DataRequired(), Length(max=100)],
         description='максимум 100 символов'
@@ -21,8 +21,12 @@ class SiForm(SiteForm):
     description_method = ExtendedSelectField(model='DescriptionMethod')
     description = StringField()
     method = StringField()
-    service_type = ExtendedSelectField(model='ServiceType')
-    service_interval = ExtendedSelectField(model='ServiceInterval')
+    service_type = ExtendedSelectField(
+        model='ServiceType', validators=[DataRequired()]
+    )
+    service_interval = ExtendedSelectField(
+        model='ServiceInterval', validators=[DataRequired()]
+    )
     etalon = BooleanField(default=False)
     category_etalon = StringField(
         validators=[Length(max=100)],
@@ -39,12 +43,12 @@ class SiForm(SiteForm):
     room_use_etalon = ExtendedSelectField(model='Room')
     place = ExtendedSelectField(model='Place')
     control_vp = BooleanField(default=False)
-    room_delivery = ExtendedSelectField(model='Room')
     employee = ExtendedSelectField(model='Employee')
     division = StringField()
     email = StringField()
-    date_last_service = DateField()
-    date_next_service = DateField()
+    room_delivery = ExtendedSelectField(model='Room')
+    date_last_service = DateField(validators=[Optional()])
+    date_next_service = DateField(validators=[Optional()])
     certificate = ExtendedFileField()
     is_service = BooleanField(default=False)
 
@@ -57,7 +61,7 @@ class SiForm(SiteForm):
 class ServiceForm(SiteForm):
     """Обслуживание СИ"""
 
-    date_in_service = DateField()
+    date_in_service = DateField(validators=[Optional()])
     date_last_service = DateField(validators=[Optional()])
     date_next_service = DateField(validators=[Optional()])
     is_ready = BooleanField(default=False)

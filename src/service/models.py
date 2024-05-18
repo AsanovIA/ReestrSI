@@ -11,66 +11,68 @@ class Si(BasePK, Base):
     """Средство измерения"""
     __tablename__ = "si"
 
-    group_si_id: Mapped[int] = mapped_column(
+    group_si_id: Mapped[Optional[int]] = mapped_column(
         ForeignKey("group_si.id", ondelete="CASCADE"),
         info={'label': 'Группы СИ по областям и разделам областей измерений'}
     )
-    name_si_id: Mapped[int] = mapped_column(
+    name_si_id: Mapped[Optional[int]] = mapped_column(
         ForeignKey("name_si.id", ondelete="CASCADE"),
         info={'label': 'Наименование СИ'}
     )
-    type_si_id: Mapped[int] = mapped_column(
+    type_si_id: Mapped[Optional[int]] = mapped_column(
         ForeignKey("type_si.id", ondelete="CASCADE"),
         info={'label': 'Тип СИ'}
     )
-    number: Mapped[str] = mapped_column(info={'label': 'Заводской номер'})
-    description_method_id: Mapped[int] = mapped_column(
-        ForeignKey("description_method.id", ondelete="CASCADE"),
-        info={'label': 'Описание и методика поверки СИ'}
+    number: Mapped[Optional[str]] = mapped_column(
+        info={'label': 'Заводской номер'}
     )
-    service_type_id: Mapped[int] = mapped_column(
+    description_method_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("description_method.id", ondelete="CASCADE"),
+        info={'label': 'Описание типа и методика поверки СИ'}
+    )
+    service_type_id: Mapped[Optional[int]] = mapped_column(
         ForeignKey("service_type.id", ondelete="CASCADE"),
         info={'label': 'Вид метрологического обслуживания'}
     )
-    service_interval_id: Mapped[int] = mapped_column(
+    service_interval_id: Mapped[Optional[int]] = mapped_column(
         ForeignKey("service_interval.id", ondelete="CASCADE"),
         info={'label': 'Интервал обслуживания'}
     )
     etalon: Mapped[bool] = mapped_column(info={'label': 'Эталон'})
     category_etalon: Mapped[Optional[str]] = mapped_column(
-        info={'label': 'Категория эталона'})
+        info={'label': 'Разряд/КТ'})
     year_production: Mapped[Optional[int]] = mapped_column(
         info={
             'check': 'LENGTH(year_production) = 4',
-            'label': 'Год производства',
+            'label': 'Год выпуска',
         },
     )
     nomenclature: Mapped[Optional[str]] = mapped_column(
         info={'label': 'Номенклатурный номер'})
+    room_use_etalon_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("room.id", ondelete="CASCADE"),
+        info={'label': '№ помещения, в котором применяется эталон'}
+    )
     place_id: Mapped[Optional[int]] = mapped_column(
         ForeignKey("place.id", ondelete="CASCADE"),
         info={'label': 'Место обслуживания'}
     )
     control_vp: Mapped[bool] = mapped_column(info={'label': 'Контроль ВП'})
-    room_use_etalon_id: Mapped[Optional[int]] = mapped_column(
-        ForeignKey("room.id", ondelete="CASCADE"),
-        info={'label': '№ помещения, в котором применяется эталон'}
-    )
-    room_delivery_id: Mapped[int] = mapped_column(
-        ForeignKey("room.id", ondelete="CASCADE"),
-        info={'label': '№ помещения где можно получить СИ после обслуживания'}
-    )
-    employee_id: Mapped[int] = mapped_column(
+    employee_id: Mapped[Optional[int]] = mapped_column(
         ForeignKey("employee.id", ondelete="CASCADE"),
         info={'label': 'Ответственное лицо'}
     )
+    room_delivery_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("room.id", ondelete="CASCADE"),
+        info={'label': '№ помещения где можно получить СИ после обслуживания'}
+    )
     date_last_service: Mapped[Optional[datetime.date]] = mapped_column(
         info={'label': 'Дата последнего обслуживания'})
-    date_next_service: Mapped[datetime.date] = mapped_column(
+    date_next_service: Mapped[Optional[datetime.date]] = mapped_column(
         info={'label': 'Дата следующего обслуживания'})
     certificate: Mapped[Optional[str]] = mapped_column(
         info={
-            'label': 'Сертификат',
+            'label': 'Свидетельство/сертификат',
             'type': 'FileField',
             'upload': 'certificate/',
         })
@@ -133,10 +135,10 @@ class Si(BasePK, Base):
             'room_use_etalon',
             'place',
             'control_vp',
-            'room_delivery',
             'employee',
             'division',
             'email',
+            'room_delivery',
             'date_last_service',
             'date_next_service',
             'certificate',
@@ -197,7 +199,7 @@ class Si(BasePK, Base):
 
     division.short_description = 'Подразделение'
     email.short_description = 'e-mail'
-    description.short_description = 'Описание СИ'
+    description.short_description = 'Описание типа СИ'
     method.short_description = 'Методика поверки СИ'
 
 
@@ -209,7 +211,7 @@ class Service(BasePK, Base):
         ForeignKey("si.id", ondelete="CASCADE"),
         info={'label': 'Средство измерения'}
     )
-    date_in_service: Mapped[datetime.date] = mapped_column(
+    date_in_service: Mapped[Optional[datetime.date]] = mapped_column(
         info={'label': 'Дата поступления на обслуживание'})
     date_out_service: Mapped[Optional[datetime.date]] = mapped_column(
         info={'label': 'Дата возврата с обслуживания'})

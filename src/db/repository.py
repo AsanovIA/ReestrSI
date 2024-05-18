@@ -1,6 +1,6 @@
 from collections.abc import Iterable
 from flask import g
-from sqlalchemy import select, insert, delete, desc
+from sqlalchemy import select, insert, delete
 from sqlalchemy.orm import joinedload
 from typing import Union
 
@@ -35,28 +35,6 @@ def get_options_load(model):
     return list(get_related_model())
 
 
-def get_ordering(model):
-    try:
-        fields = getattr(model.Meta, 'ordering')
-    except AttributeError:
-        return ()
-
-    def create_ordering():
-        for field in fields:
-            asc_desc = True
-            if field.startswith("-"):
-                asc_desc = False
-                field = field[1:]
-            if not hasattr(model, field):
-                continue
-            if asc_desc:
-                yield getattr(model, field)
-            else:
-                yield desc(getattr(model, field))
-
-    return tuple(create_ordering())
-
-
 class Repository:
 
     @classmethod
@@ -73,10 +51,14 @@ class Repository:
                 session.commit()
 
     @classmethod
-    def task_count(cls, model=None):
-        model = model or g.model
+    def task_count(cls, q):
+        model = q.model
+        filters = q.filters
         with session_factory() as session:
-            result = session.query(model).count()
+            query = session.query(model)
+            if filters:
+                query = query.filter(*filters)
+            result = query.count()
 
         return result
 
@@ -90,13 +72,13 @@ class Repository:
         return result
 
     @classmethod
-    def task_get_list(cls, query=None, model=None):
-        model = model or query.model
-        filters = query.filters if query else None
-        joins = query.joins if query else None
-        ordering = query.ordering if query else get_ordering(model)
-        limit = query.limit if query else None
-        offset = query.offset if query else None
+    def task_get_list(cls, q):
+        model = q.model
+        filters = q.filters
+        joins = q.joins
+        ordering = q.ordering
+        limit = q.limit
+        offset = q.offset
 
         with session_factory() as session:
             query = select(model).select_from(model)

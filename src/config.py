@@ -18,9 +18,9 @@ class Settings(BaseSettings):
     ALLOWED_EXTENSIONS: List[str] = ['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif']
 
     APPS: List[str] = [
-        'datasource',
-        'service',
-        'users',
+        'src.datasource',
+        'src.service',
+        'src.users',
     ]
 
     AUTH_PASSWORD_VALIDATORS: List[dict] = [

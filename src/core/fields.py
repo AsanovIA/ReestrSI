@@ -3,12 +3,13 @@ import itertools
 
 from markupsafe import Markup
 from wtforms import widgets
-from wtforms.fields.simple import FileField
+from flask_wtf.file import FileField
 from wtforms.fields.choices import SelectField
 from wtforms.validators import ValidationError
 
 from src.db.repository import Repository
 from src.config import settings
+from src.core.queries import Query
 from . import ALL_VAR
 from .utils import DATE_FORMAT, get_model
 from .widgets import ExtendedFileInput
@@ -19,10 +20,9 @@ ALL_CHOICE = [(ALL_VAR, 'Не важно')]
 
 
 def get_choices_for_model(model_name):
-    options = {'model': get_model(model_name)}
+    query = Query(model=get_model(model_name))
     choices = [
-        (str(obj.id), obj)
-        for obj in Repository.task_get_list(**options)
+        (str(obj.id), obj) for obj in Repository.task_get_list(q=query)
     ]
     return choices
 
@@ -121,7 +121,7 @@ class ExtendedFileField(FileField):
         return Markup('<ul>{}</ul>'.format(text))
 
     def post_validate(self, form, validation_stopped):
-        filename = self.data.filename
+        filename = getattr(self.data, 'filename', None)
         if filename:
             if '.' not in filename:
                 raise ValidationError('Отсутствует расширение файла')
