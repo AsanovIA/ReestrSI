@@ -13,17 +13,21 @@ from .utils import (
 class SiteForm(FlaskForm):
     def __init__(self, obj, *args, **kwargs):
         super().__init__(obj=obj, *args, **kwargs)
+        try:
+            fields = getattr(self.Meta, 'fields')
+        except AttributeError:
+            fields = None
+
         readonly_fields = getattr(
             getattr(self, 'Meta', []), 'readonly_fields', []
         )
-        self.instance = obj
+        self.instance = g.model() if obj is None else obj
         self.changed_data = []
         self.fields = []
-        for field in self:
-            if field.name not in FIELDS_EXCLUDE:
-                self.fields.append(field.name)
-                #  Установка label полей формы
-                field.label.text = label_for_field(field.name, form=self) + ':'
+
+        def set_attributes():
+            #  Установка label полей формы
+            field.label.text = label_for_field(field.name, form=self) + ':'
             if getattr(field.flags, 'required', None):
                 field.label_class = {'class': 'required'}
             else:
@@ -48,10 +52,22 @@ class SiteForm(FlaskForm):
             #  Установка выбранных значений в Select формы
             if isinstance(
                     field, ExtendedSelectField) and not field.is_readonly:
-                value = getattr(obj, f'{field.name}_id', None)
+                value = getattr(self.instance, f'{field.name}_id', None)
                 if request.method == 'POST':
                     value = self.data[field.name]
                 field.data = str(value)
+
+        if fields:
+            for field_name in fields:
+                field = self[field_name]
+                self.fields.append(field)
+                set_attributes()
+        else:
+            for field in self:
+                if field.name in FIELDS_EXCLUDE:
+                    continue
+                self.fields.append(field)
+                set_attributes()
 
     def contents(self, field):
         from sqlalchemy.orm import Relationship
@@ -74,8 +90,8 @@ class SiteForm(FlaskForm):
                         result_repr = str(value)
             else:
                 if (
-                    isinstance(f.property, Relationship)
-                    and value is not None
+                        isinstance(f.property, Relationship)
+                        and value is not None
                 ):
                     result_repr = str(value)
                 else:
@@ -87,9 +103,8 @@ class SiteForm(FlaskForm):
 
     def validate(self, extra_validators=None):
         validate = super().validate(extra_validators)
-        if not validate:
-            return validate
-        self.instance, self.changed_data = self.update_instance()
+        self.changed_data = self.check_changed_data()
+        self.instance = self.update_instance()
         post_validate = self.post_validate()
 
         return validate and post_validate
@@ -101,6 +116,28 @@ class SiteForm(FlaskForm):
         return True
 
     def update_instance(self):
+        model = g.model
+        exclude = getattr(getattr(self, 'Meta', None), 'exclude', None)
+        instance = self.instance
+
+        for field in self:
+            if not hasattr(model, field.name) or field.name not in self.data:
+                continue
+            if exclude is not None and field.name in exclude:
+                continue
+
+            value = self.data[field.name]
+            if isinstance(field, ExtendedSelectField):
+                value = int(value) if value != '' else None
+                setattr(instance, f'{field.name}_id', value)
+
+            else:
+                value = value if value != '' else None
+                setattr(instance, field.name, value)
+
+        return instance
+
+    def check_changed_data(self):
         model = g.model
         exclude = getattr(getattr(self, 'Meta', None), 'exclude', None)
         instance = self.instance
@@ -123,18 +160,15 @@ class SiteForm(FlaskForm):
                     changed_fields.append(field)
                 continue
 
-            elif isinstance(field, ExtendedSelectField):
-                value = self.data[field.name]
+            value = self.data[field.name]
+            if isinstance(field, ExtendedSelectField):
                 value = int(value) if value != '' else None
                 if value != getattr(instance, f'{field.name}_id'):
                     changed_fields.append(field)
-                setattr(instance, f'{field.name}_id', value)
 
             else:
-                value = self.data[field.name]
                 value = value if value != '' else None
                 if value != getattr(instance, field.name):
                     changed_fields.append(field)
-                setattr(instance, field.name, value)
 
-        return instance, changed_fields
+        return changed_fields

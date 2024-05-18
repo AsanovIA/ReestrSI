@@ -20,7 +20,8 @@ ALL_CHOICE = [(ALL_VAR, 'Не важно')]
 
 
 def get_choices_for_model(model_name):
-    query = Query(model=get_model(model_name))
+    model = get_model(model_name)
+    query = Query(model=model, filters=[model.view == True])
     choices = [
         (str(obj.id), obj) for obj in Repository.task_get_list(q=query)
     ]

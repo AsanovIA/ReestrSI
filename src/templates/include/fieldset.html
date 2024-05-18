@@ -1,5 +1,5 @@
 <fieldset class="module aligned">
-{% for field in form if field.name in form.fields %}
+{% for field in form.fields %}
   <div class="form-row{% if field.errors %} errors{% endif %}{% if field.name %} field-{{ field.name }}{% endif %}">
     {% if field.errors and not field.is_readonly %}
       <ul class="errorlist">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul>

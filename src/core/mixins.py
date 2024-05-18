@@ -460,11 +460,11 @@ class FormMixin(SiteMixin):
             f'.list_{self.blueprint_name}', model_name=self.model_name
         )
 
-    def get_object_url(self):
+    def get_object_url(self, obj):
         return try_get_url(
             f'.change_{self.blueprint_name}',
             model_name=self.model_name,
-            pk=g.object.id
+            pk=obj.id
         )
 
     def get_success_continue_url(self):
@@ -497,9 +497,8 @@ class FormMixin(SiteMixin):
     def object_save(self, obj):
         Repository.task_update_object(obj)
 
-    def get_success_message(self):
+    def get_success_message(self, obj):
         actions = {'add': 'добавлен', 'change': 'изменен', 'delete': 'удален'}
-        obj = g.object
         name_str = str(obj)
         resume_text = ''
         link_or_text = name_str
@@ -507,7 +506,7 @@ class FormMixin(SiteMixin):
             resume_text = ' Можете продолжить редактирование.'
         else:
             if self.action != 'delete':
-                obj_url = self.get_object_url()
+                obj_url = self.get_object_url(obj)
                 link_or_text = format_html(
                     '<a href="{}">{}</a>', obj_url, name_str
                 )
@@ -530,7 +529,7 @@ class FormMixin(SiteMixin):
                 obj = form.instance
                 obj = self.pre_save(obj)
 
-                message = self.get_success_message()
+                message = self.get_success_message(obj)
                 category = 'success'
 
                 self.object_save(obj)
@@ -558,7 +557,7 @@ class AddMixin(FormMixin):
     action = 'add'
 
     def get_object(self):
-        return g.model()
+        return
 
     def get_success_continue_url(self):
         return try_get_url(

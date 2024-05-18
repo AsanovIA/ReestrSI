@@ -1,56 +1,70 @@
-from wtforms import StringField, EmailField
+from wtforms import StringField, EmailField, BooleanField
 from wtforms.validators import Length, Email, InputRequired, Optional
 
 from src.core import SiteForm, ExtendedFileField, ExtendedSelectField, Unique
 
 
-class FieldNameForm(SiteForm):
+class FieldViewForm(SiteForm):
+    view = BooleanField(
+        default=True,
+        description=("Отметьте, если значение должно отображаться в списке "
+                     "выбора. Уберите эту отметку вместо удаления значения.")
+    )
+
+
+class FieldViewNameForm(FieldViewForm):
     name = StringField(
         validators=[InputRequired(), Length(max=256), Unique()],
         description='максимум 256 символов'
     )
 
+    class Meta:
+        fields = ['name', 'view']
 
-class GroupSiForm(FieldNameForm):
+
+class GroupSiForm(FieldViewNameForm):
     """Группы СИ по областям и разделам областей измерений"""
 
 
-class NameSiForm(FieldNameForm):
+class NameSiForm(FieldViewNameForm):
     """Наименование СИ"""
 
 
-class TypeSiForm(FieldNameForm):
+class TypeSiForm(FieldViewNameForm):
     """Тип СИ"""
 
 
-class DescriptionMethodForm(FieldNameForm):
+class DescriptionMethodForm(FieldViewNameForm):
     """Описание и методика поверки СИ"""
 
     description = ExtendedFileField()
     method = ExtendedFileField()
 
+    class Meta:
+        fields = ['name', 'description', 'method', 'view']
 
-class ServiceTypeForm(FieldNameForm):
+
+class ServiceTypeForm(FieldViewNameForm):
     """Вид метрологического обслуживания"""
 
 
-class ServiceIntervalForm(FieldNameForm):
+class ServiceIntervalForm(FieldViewNameForm):
     """Межповерочный интервал"""
 
 
-class PlaceForm(FieldNameForm):
+class PlaceForm(FieldViewNameForm):
     """Место поверки/калибровки"""
 
 
-class RoomForm(FieldNameForm):
+class RoomForm(FieldViewNameForm):
     """№ помещения где можно получить СИ после поверки (калибровки)"""
 
 
-class DivisionForm(FieldNameForm):
+class DivisionForm(FieldViewNameForm):
     """Подразделение"""
 
 
-class EmployeeForm(SiteForm):
+class EmployeeForm(FieldViewForm):
     """Ответственное лицо (сотрудник)"""
 
     last_name = StringField(
@@ -73,3 +87,9 @@ class EmployeeForm(SiteForm):
         ]
     )
     division = ExtendedSelectField(model='Division')
+
+    class Meta:
+        fields = (
+            'last_name', 'first_name', 'middle_name', 'email', 'division',
+            'view'
+        )

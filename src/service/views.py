@@ -128,10 +128,10 @@ class OutServiceView(ServiceMixin, ChangeMixin):
 
         return context
 
-    def get_object_url(self):
+    def get_object_url(self, obj):
         return try_get_url(
             f'admin.si.change_si',
-            pk=g.object_si.id
+            pk=obj.id
         )
 
     def pre_save(self, obj):
@@ -145,10 +145,10 @@ class OutServiceView(ServiceMixin, ChangeMixin):
 
         return [obj, si]
 
-    def get_success_message(self):
+    def get_success_message(self, obj):
         obj = g.object_si
         name_str = str(obj)
-        obj_url = self.get_object_url()
+        obj_url = self.get_object_url(obj)
         link_or_text = format_html(
             '<a href="{}">{}</a>', obj_url, name_str
         )
@@ -184,10 +184,10 @@ class AddServiceView(ServiceMixin, AddMixin):
 
         return context
 
-    def get_object_url(self):
+    def get_object_url(self, obj):
         return try_get_url(
             f'admin.si.change_si',
-            pk=g.object_si.id
+            pk=obj.id
         )
 
     def get_success_url(self):
@@ -202,10 +202,10 @@ class AddServiceView(ServiceMixin, AddMixin):
 
         return [obj, si]
 
-    def get_success_message(self):
+    def get_success_message(self, obj):
         obj = g.object_si
         name_str = str(obj)
-        obj_url = self.get_object_url()
+        obj_url = self.get_object_url(obj)
         link_or_text = format_html(
             '<a href="{}">{}</a>', obj_url, name_str
         )

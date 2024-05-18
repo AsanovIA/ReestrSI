@@ -11,7 +11,7 @@ class Unique:
         self.message = message
 
     def __call__(self, form, field):
-        model, instance = g.model, g.object
+        model, instance = g.model, form.instance
         filters = [
             getattr(model, field.name) == field.data,
             model.id != instance.id,
