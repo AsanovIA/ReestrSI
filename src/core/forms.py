@@ -125,10 +125,12 @@ class SiteForm(FlaskForm):
                 continue
             if exclude is not None and field.name in exclude:
                 continue
+            if isinstance(field, ExtendedFileField):
+                continue
 
             value = self.data[field.name]
             if isinstance(field, ExtendedSelectField):
-                value = int(value) if value != '' else None
+                value = int(value) if value else None
                 setattr(instance, f'{field.name}_id', value)
 
             else:
@@ -162,7 +164,7 @@ class SiteForm(FlaskForm):
 
             value = self.data[field.name]
             if isinstance(field, ExtendedSelectField):
-                value = int(value) if value != '' else None
+                value = int(value) if value else None
                 if value != getattr(instance, f'{field.name}_id'):
                     changed_fields.append(field)
 

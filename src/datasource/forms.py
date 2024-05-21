@@ -60,6 +60,10 @@ class RoomForm(FieldViewNameForm):
     """№ помещения где можно получить СИ после поверки (калибровки)"""
 
 
+class StatusServiceForm(FieldViewNameForm):
+    """Состояние обслуживания СИ"""
+
+
 class DivisionForm(FieldViewNameForm):
     """Подразделение"""
 

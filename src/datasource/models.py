@@ -112,6 +112,19 @@ class Room(BaseViewName, Base):
         verbose_name_plural = 'Помещения'
 
 
+class StatusService(BaseViewName, Base):
+    """Состояние обслуживания СИ"""
+    __tablename__ = "status_service"
+
+    si: Mapped["Si"] = relationship(back_populates="status_service")
+    service: Mapped["Service"] = relationship(back_populates="status_service")
+
+    class Meta(BaseViewName.Meta, Base.Meta):
+        action_suffix = 'о'
+        verbose_name = 'Состояние обслуживания СИ'
+        verbose_name_plural = 'Состояния обслуживания СИ'
+
+
 class DescriptionMethod(BaseViewName, Base):
     """Описание СИ и методика поверки СИ"""
     __tablename__ = "description_method"

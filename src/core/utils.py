@@ -31,7 +31,7 @@ def convert_quoted_string(s):
 
 
 def display_for_field(value, field, empty_value_display):
-    if isinstance(field.type, Boolean):
+    if hasattr(field, 'type') and isinstance(field.type, Boolean):
         return boolean_icon(value)
     elif value is None:
         return empty_value_display

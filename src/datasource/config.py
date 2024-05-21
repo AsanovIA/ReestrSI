@@ -7,6 +7,7 @@ from src.datasource.models import (
     DescriptionMethod,
     Place,
     Room,
+    StatusService,
     Division,
     Employee,
 )
@@ -23,6 +24,7 @@ app_settings = {
         'DescriptionMethod'.lower(): DescriptionMethod,
         'Place'.lower(): Place,
         'Room'.lower(): Room,
+        'StatusService'.lower(): StatusService,
         'Division'.lower(): Division,
         'Employee'.lower(): Employee,
     }

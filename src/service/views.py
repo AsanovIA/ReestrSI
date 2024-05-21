@@ -20,6 +20,10 @@ class ServiceMixin:
     def get_success_url(self):
         return try_get_url(f'.list_service')
 
+    def object_save(self, obj):
+        obj = [obj, g.object_si]
+        Repository.task_add_or_update_object(obj)
+
 
 class ListSiView(SiMixin, ListMixin):
     sidebar = 'filter_sidebar'
@@ -96,20 +100,21 @@ class ChangeServiceView(ServiceMixin, ChangeMixin):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['history_url'] = try_get_url(
-            '.history_service', pk=g.object.si_id
-        )
-        if g.object.is_ready:
-            context['service_url'] = try_get_url('.out_service', pk=self.pk)
-            context['link_text'] = 'Выдать СИ'
-        else:
-            context['service_url'] = ''
-            context['link_text'] = 'СИ не готово к выдачи'
-            context['class_link'] = 'deletelink'
         si = g.object.si
+        context['history_url'] = try_get_url(
+            '.history_service', pk=si.id
+        )
+        context['service_url'] = try_get_url('.out_service', pk=self.pk)
+        context['link_text'] = 'Выдать СИ'
         context['content_title'] = f'обслуживание средства измерения: {str(si)}'
 
         return context
+
+    def pre_save(self, obj):
+        g.object_si = obj.si
+        g.object_si.status_service_id = obj.status_service_id
+
+        return obj
 
 
 class OutServiceView(ServiceMixin, ChangeMixin):
@@ -135,15 +140,17 @@ class OutServiceView(ServiceMixin, ChangeMixin):
         )
 
     def pre_save(self, obj):
+        si = g.object_si
+
         obj.is_out = True
 
-        si = g.object_si
         si.is_service = False
+        si.status_service_id = None
         si.date_last_service = obj.date_last_service
         si.date_next_service = obj.date_next_service
         si.certificate = obj.certificate
 
-        return [obj, si]
+        return obj
 
     def get_success_message(self, obj):
         obj = g.object_si
@@ -161,22 +168,16 @@ class OutServiceView(ServiceMixin, ChangeMixin):
 
         return message
 
-    def object_save(self, obj):
-        Repository.task_add_or_update_object(obj)
-
 
 class AddServiceView(ServiceMixin, AddMixin):
     form_class_name = 'AddServiceForm'
 
     def g_init(self):
         super().g_init()
-        g.object_si = self.get_si()
+        g.object_si = Repository.task_get_object(self.pk, get_model('si'))
 
     def get_btn(self):
         return {'btn_change': True, 'btn_text': 'Направить на обслуживание'}
-
-    def get_si(self):
-        return Repository.task_get_object(self.pk, get_model('si'))
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -196,11 +197,12 @@ class AddServiceView(ServiceMixin, AddMixin):
     def pre_save(self, obj):
         si = g.object_si
         si.is_service = True
+        si.status_service_id = obj.status_service_id
 
         obj.si_id = si.id
         obj.date_last_service = si.date_next_service
 
-        return [obj, si]
+        return obj
 
     def get_success_message(self, obj):
         obj = g.object_si
@@ -218,15 +220,12 @@ class AddServiceView(ServiceMixin, AddMixin):
 
         return message
 
-    def object_save(self, obj):
-        Repository.task_add_or_update_object(obj)
-
 
 class HistoryServiceView(ListMixin):
     model_name = 'service'
     fields_link = None
     fields_display = [
-        'si', 'date_in_service', 'date_last_service', 'is_ready', 'is_out',
+        'si', 'date_in_service', 'date_last_service', 'status_service',
         'date_next_service', 'certificate', 'note'
     ]
 

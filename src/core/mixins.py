@@ -278,7 +278,7 @@ class ListMixin(SiteMixin):
         return context
 
     def get_search_help_text(self):
-        text = 'Значение будет просмотрено в: '
+        text = 'Поиск по: '
         labels = []
         for field_name in g.fields_search:
             label = label_for_field(field_name.split(LOOKUP_SEP)[0])
@@ -471,27 +471,6 @@ class FormMixin(SiteMixin):
         return request.url
 
     def pre_save(self, obj):
-        for field_name, file in request.files.items():
-            field = getattr(g.form, field_name)
-            folder = str(os.path.join(
-                current_app.config['UPLOAD_FOLDER'],
-                field.upload
-            ))
-            if f'{field_name}_clear' in request.form:
-                old_filename = getattr(obj, field_name)
-                os.remove(os.path.join(folder, old_filename))
-                setattr(obj, field_name, None)
-            elif file.filename:
-                if not os.path.exists(folder):
-                    os.makedirs(folder)
-                filename = secure_filename(file.filename)
-                old_filename = getattr(obj, field_name)
-                if filename == old_filename:
-                    continue
-                if old_filename:
-                    os.remove(os.path.join(folder, old_filename))
-                file.save(os.path.join(folder, filename))
-                setattr(obj, field_name, filename)
         return obj
 
     def object_save(self, obj):
@@ -522,11 +501,36 @@ class FormMixin(SiteMixin):
 
         return message
 
+    def save_files(self, obj):
+        for field_name, file in request.files.items():
+            field = getattr(g.form, field_name)
+            folder = str(os.path.join(
+                current_app.config['UPLOAD_FOLDER'],
+                field.upload
+            ))
+            old_filename = getattr(obj, field_name)
+            if f'{field_name}_clear' in request.form:
+                os.remove(os.path.join(folder, old_filename))
+                setattr(obj, field_name, None)
+            elif file.filename:
+                if not os.path.exists(folder):
+                    os.makedirs(folder)
+                filename = secure_filename(file.filename)
+                if filename == old_filename:
+                    continue
+                if old_filename:
+                    os.remove(os.path.join(folder, old_filename))
+                file.save(os.path.join(folder, filename))
+                setattr(obj, field_name, filename)
+        return obj
+
     def post(self, **kwargs):
         form = self.get_form()
         if form.validate_on_submit():
             if form.has_changed():
                 obj = form.instance
+                if request.files:
+                    obj = self.save_files(obj)
                 obj = self.pre_save(obj)
 
                 message = self.get_success_message(obj)

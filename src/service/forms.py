@@ -50,11 +50,15 @@ class SiForm(SiteForm):
     date_last_service = DateField(validators=[Optional()])
     date_next_service = DateField(validators=[Optional()])
     certificate = ExtendedFileField()
+    status_service = ExtendedSelectField(
+        model='StatusService', validators=[Optional()]
+    )
     is_service = BooleanField(default=False)
 
     class Meta:
         readonly_fields = [
-            'description', 'method', 'division', 'email', 'is_service'
+            'description', 'method', 'division', 'email', 'status_service',
+            'is_service'
         ]
 
 
@@ -64,7 +68,7 @@ class ServiceForm(SiteForm):
     date_in_service = DateField(validators=[Optional()])
     date_last_service = DateField(validators=[Optional()])
     date_next_service = DateField(validators=[Optional()])
-    is_ready = BooleanField(default=False)
+    status_service = ExtendedSelectField(model='StatusService')
     certificate = ExtendedFileField()
     note = TextAreaField(
         validators=[Length(max=1000)], description='максимум 1000 символов'
@@ -78,6 +82,9 @@ class AddServiceForm(SiteForm):
     """Добавление СИ на обслуживание"""
 
     date_in_service = DateField(validators=[DataRequired()])
+    status_service = ExtendedSelectField(
+        model='StatusService', validators=[DataRequired()]
+    )
 
 
 class OutServiceForm(SiteForm):
@@ -85,7 +92,7 @@ class OutServiceForm(SiteForm):
 
     date_out_service = DateField(validators=[DataRequired()])
     date_next_service = DateField(validators=[DataRequired()])
-    certificate = ExtendedFileField()
+    certificate = ExtendedFileField(validators=[DataRequired()])
     note = TextAreaField(
         validators=[Length(max=1000)], description='максимум 1000 символов'
     )

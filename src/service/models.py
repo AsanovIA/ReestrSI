@@ -76,6 +76,10 @@ class Si(BasePK, Base):
             'type': 'FileField',
             'upload': 'certificate/',
         })
+    status_service_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("status_service.id"),
+        info={'label': 'Состояние обслуживания СИ'}
+    )
     is_service: Mapped[bool] = mapped_column(
         info={'label': 'На обслуживании'}, default=False)
 
@@ -96,6 +100,7 @@ class Si(BasePK, Base):
     room_delivery: Mapped["Room"] = relationship(
         foreign_keys=[room_delivery_id],
     )
+    status_service: Mapped["StatusService"] = relationship(back_populates="si")
     employee: Mapped["Employee"] = relationship(back_populates="si")
 
     service: Mapped["Service"] = relationship(back_populates="si")
@@ -115,6 +120,7 @@ class Si(BasePK, Base):
             'place',
             'room_use_etalon',
             'room_delivery',
+            'status_service',
             'employee',
             'employee__division',
         )
@@ -142,6 +148,7 @@ class Si(BasePK, Base):
             'date_last_service',
             'date_next_service',
             'certificate',
+            'status_service',
             'is_service',
         )
         fields_filter = (
@@ -160,6 +167,7 @@ class Si(BasePK, Base):
             'employee__division',
             'date_last_service',
             'date_next_service',
+            'status_service',
             'is_service',
         )
         fields_search = (
@@ -173,6 +181,7 @@ class Si(BasePK, Base):
             'category_etalon',
             'year_production',
             'nomenclature',
+            'status_service__name',
             # 'room_use_etalon__name',
             # 'place__name',
             # 'room_delivery__name',
@@ -226,24 +235,29 @@ class Service(BasePK, Base):
             'upload': 'certificate/',
         })
     note: Mapped[Optional[str]] = mapped_column(info={'label': 'Примечание'})
-    is_ready: Mapped[bool] = mapped_column(
-        info={'label': 'Готовность к выдачи'}, default=False)
+    status_service_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("status_service.id"),
+        info={'label': 'Состояние обслуживания СИ'}
+    )
     is_out: Mapped[bool] = mapped_column(
         info={'label': 'Выдан'}, default=False)
 
     si: Mapped["Si"] = relationship(back_populates="service")
+    status_service: Mapped["StatusService"] = relationship(
+        back_populates="service"
+    )
 
     class Meta(Base.Meta):
         action_suffix = 'о'
         verbose_name = 'Обслуживание СИ'
         verbose_name_plural = 'Обслуживание СИ'
         ordering = ('date_in_service',)
-        select_related = ('si',)
+        select_related = ('si', 'status_service')
         fields_display = (
-            'si', 'date_in_service', 'date_last_service', 'is_ready',
+            'si', 'date_in_service', 'date_last_service', 'status_service',
             'date_next_service', 'certificate', 'note'
         )
-        fields_filter = ('is_ready',)
+        fields_filter = ('status_service',)
         fields_search = ('si__number',)
 
     def __str__(self):
