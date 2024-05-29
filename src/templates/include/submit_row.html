@@ -36,9 +36,5 @@
     <a href="{{ add_url }}" class="addlink">добавить {{ object_verbose_name|lower }}</a>
     {% endif %}
 
-    {% if perm.perm_delete and btn.btn_delete %}
-    <a href="{{ delete_url }}" class="deletelink">удалить {{ object_verbose_name|lower }}</a>
-    {% endif %}
-
 </div>
 {% endif %}

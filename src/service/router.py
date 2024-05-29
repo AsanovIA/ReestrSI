@@ -1,7 +1,7 @@
 from flask import Blueprint
 
 from src.service.views import (
-    ListSiView, ChangeSiView, AddSiView,
+    ListSiView, ChangeSiView, AddSiView, DeleteSiView,
     ListServiceView, ChangeServiceView, AddServiceView, OutServiceView,
     HistoryServiceView
 )
@@ -24,6 +24,12 @@ router_si.add_url_rule("/<int:pk>/",
 router_si.add_url_rule("/add/",
                        view_func=AddSiView.as_view(
                            name=f"add_{router_si.name}",
+                           blueprint_name=router_si.name,
+                       ))
+
+router_si.add_url_rule("/<int:pk>/delete/",
+                       view_func=DeleteSiView.as_view(
+                           name=f"delete_{router_si.name}",
                            blueprint_name=router_si.name,
                        ))
 

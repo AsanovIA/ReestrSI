@@ -236,7 +236,17 @@ default_data = {
     'Service': [
         {
             'si_id': 1,
-            'date_in_service': datetime.datetime(2000, 0o1, 0o2),
+            'date_in_service': datetime.datetime(2001, 0o1, 0o2),
+            'is_out': True,
+        },
+        {
+            'si_id': 1,
+            'date_in_service': datetime.datetime(2002, 0o1, 0o2),
+            'is_out': True,
+        },
+        {
+            'si_id': 1,
+            'date_in_service': datetime.datetime(2003, 0o1, 0o2),
             'is_out': True,
         },
         {

@@ -11,7 +11,7 @@ from src.db.repository import Repository
 from src.config import settings
 from src.core.queries import Query
 from . import ALL_VAR
-from .utils import DATE_FORMAT, get_model
+from .utils import get_model
 from .widgets import ExtendedFileInput
 
 
@@ -85,7 +85,7 @@ class FilterSelectField(FilterField):
 
 class FilterDateField(FilterField):
     widget = widgets.DateInput()
-    format = DATE_FORMAT
+    format = "%Y-%m-%d"
 
     def __init__(self, data, **kwargs):
         super().__init__(**kwargs)

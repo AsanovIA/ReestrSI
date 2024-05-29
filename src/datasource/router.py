@@ -1,8 +1,7 @@
 from flask import Blueprint
 
 from src.datasource.views import (
-    IndexView, ListObjectView, ChangeObjectView, AddObjectView,
-    DeleteObjectView
+    IndexView, ListObjectView, ChangeObjectView, AddObjectView
 )
 
 router = Blueprint('datasource', __name__, url_prefix='/datasource')
@@ -28,11 +27,5 @@ router.add_url_rule("/<model_name>/<int:pk>/",
 router.add_url_rule("/<model_name>/add/",
                     view_func=AddObjectView.as_view(
                         name=f"add_{router.name}",
-                        blueprint_name=router.name,
-                    ))
-
-router.add_url_rule("/<model_name>/<int:pk>/delete/",
-                    view_func=DeleteObjectView.as_view(
-                        name=f"delete_{router.name}",
                         blueprint_name=router.name,
                     ))

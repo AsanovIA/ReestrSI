@@ -1,9 +1,11 @@
+import os
+
 from flask import g
 from sqlalchemy.exc import NoResultFound
 
 from src.core.queries import Query
 from src.db.repository import Repository
-from src.core.mixins import ListMixin, ChangeMixin, AddMixin
+from src.core.mixins import ListMixin, ChangeMixin, AddMixin, DeleteMixin
 from src.core.utils import get_model, try_get_url, format_html
 
 
@@ -53,6 +55,12 @@ class ChangeSiView(SiMixin, ChangeMixin):
 
         return try_get_url(f'admin.service.change_service', pk=service.id)
 
+    def get_delete_url(self):
+        return try_get_url(
+            f'.delete_{self.blueprint_name}',
+            pk=g.object.id
+        )
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['history_url'] = try_get_url(
@@ -65,11 +73,66 @@ class ChangeSiView(SiMixin, ChangeMixin):
             context['service_url'] = try_get_url('.add_service', pk=self.pk)
             context['link_text'] = 'Направить на обслуживание'
 
+        context['delete_url'] = self.get_delete_url()
+        context['btn']['btn_delete'] = True
+
         return context
+
+    def get_media(self):
+        from src.core import Media
+
+        media = super().get_media()
+        media += Media(js=['js/ajax.js'])
+
+        return media
 
 
 class AddSiView(SiMixin, AddMixin):
     pass
+
+
+class DeleteSiView(SiMixin, DeleteMixin):
+
+    def get_deleted_objects(self):
+        model = get_model('service')
+        query = Query(model=model, filters=[model.si_id == self.pk])
+        history_list = Repository.task_get_list(query)
+        list_files = []
+        field = model.certificate
+        for obj in history_list:
+            filename = getattr(obj, field.name)
+            if not filename:
+                continue
+            path_file = str(os.path.join(field.info['upload'], filename))
+            link_file = format_html(
+                '<a href="{}" target="_blank">{}</a>',
+                try_get_url('source.view_file', filename=path_file),
+                filename
+            )
+            list_files.append(link_file)
+
+        return list_files
+
+    def get_object_url(self, obj):
+        return try_get_url(
+            f'.change_{self.blueprint_name}',
+            pk=obj.id
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['deleted_objects'] = self.get_deleted_objects()
+
+        return context
+
+    def post(self, **kwargs):
+        model = get_model('service')
+        query = Query(model=model, filters=[model.si_id == self.pk])
+        history_list = Repository.task_get_list(query)
+        for obj in history_list:
+            self.delete_files(model.__table__.columns, obj)
+
+        return super().post(**kwargs)
 
 
 class ListServiceView(ListMixin):
@@ -224,10 +287,10 @@ class AddServiceView(ServiceMixin, AddMixin):
 class HistoryServiceView(ListMixin):
     model_name = 'service'
     fields_link = None
-    fields_display = [
-        'si', 'date_in_service', 'date_last_service', 'status_service',
-        'date_next_service', 'certificate', 'note'
-    ]
+
+    def get_fields_display(self):
+        model = get_model('service')
+        return model.Meta.fields_display
 
     def get_btn(self):
         return {}

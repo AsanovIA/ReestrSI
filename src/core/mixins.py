@@ -406,8 +406,7 @@ class ListMixin(SiteMixin):
                 yield format_html('<td{}>{}</td>', row_class, result_repr)
 
 
-class FormMixin(SiteMixin):
-    template: str = 'form_result.html'
+class ObjectMixin(SiteMixin):
     methods = ["GET", "POST"]
     action = None
 
@@ -415,45 +414,20 @@ class FormMixin(SiteMixin):
         super().g_init()
         g.object = self.get_object()
 
-    def get_btn(self):
-        return {'btn_save': True, 'btn_save_and_continue': True}
+    def get_object(self):
+        try:
+            return Repository.task_get_object(filters=self.pk)
+        except NoResultFound:
+            abort(404)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        if 'form' not in context:
-            context['form'] = self.get_form()
         try:
             context['title'] = g.model.Meta.verbose_name
         except AttributeError:
             pass
 
         return context
-
-    def get_media(self):
-        media = super().get_media()
-        if self.model_name == 'si':
-            media += Media(js=['js/ajax.js'])
-
-        return media
-
-    def get_form_kwargs(self):
-        kwargs = {
-            'meta': {'locales': [settings.LANGUAGE]},
-            'obj': g.object,
-        }
-        return kwargs
-
-    def get_form(self):
-        form = get_form_class()(**self.get_form_kwargs())
-        g.form = form
-
-        return form
-
-    def get_object(self):
-        try:
-            return Repository.task_get_object(filters=self.pk)
-        except NoResultFound:
-            abort(404)
 
     def get_success_url(self):
         return try_get_url(
@@ -466,15 +440,6 @@ class FormMixin(SiteMixin):
             model_name=self.model_name,
             pk=obj.id
         )
-
-    def get_success_continue_url(self):
-        return request.url
-
-    def pre_save(self, obj):
-        return obj
-
-    def object_save(self, obj):
-        Repository.task_update_object(obj)
 
     def get_success_message(self, obj):
         actions = {'add': 'добавлен', 'change': 'изменен', 'delete': 'удален'}
@@ -500,6 +465,51 @@ class FormMixin(SiteMixin):
         )
 
         return message
+
+
+class FormMixin(ObjectMixin):
+    template: str = 'form_result.html'
+
+    def get_btn(self):
+        return {
+            'btn_save': True, 'btn_save_and_continue': True
+        }
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if 'form' not in context:
+            context['form'] = self.get_form()
+
+        return context
+
+    def get_form_kwargs(self):
+        kwargs = {
+            'meta': {'locales': [settings.LANGUAGE]},
+            'obj': g.object,
+        }
+        return kwargs
+
+    def get_form(self):
+        form = get_form_class()(**self.get_form_kwargs())
+        g.form = form
+
+        return form
+
+    def get_delete_url(self):
+        return try_get_url(
+            f'.delete_{self.blueprint_name}',
+            model_name=self.model_name,
+            pk=g.object.id
+        )
+
+    def get_success_continue_url(self):
+        return request.url
+
+    def pre_save(self, obj):
+        return obj
+
+    def object_save(self, obj):
+        Repository.task_update_object(obj)
 
     def save_files(self, obj):
         for field_name, file in request.files.items():
@@ -574,5 +584,48 @@ class AddMixin(FormMixin):
         Repository.task_add_object(obj)
 
 
-class DeleteMixin(SiteMixin):
+class DeleteMixin(ObjectMixin):
+    template: str = 'delete.html'
     action = 'delete'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['object_name'] = g.model.Meta.verbose_name
+        try:
+            context['object_url'] = format_html(
+                '<a href="{}" class ="text">{}</a>',
+                self.get_object_url(g.object),
+                g.object
+            )
+        except BuildError:
+            context['object_url'] = g.object
+
+        return context
+
+    def delete_files(self, columns, obj):
+        for column in columns:
+            if (
+                    hasattr(column, 'info')
+                    and 'type' in column.info
+                    and column.info['type'] == 'FileField'
+            ):
+                filename = getattr(obj, column.name)
+                if not filename:
+                    continue
+                path_file = str(os.path.join(
+                    current_app.config['UPLOAD_FOLDER'],
+                    column.info['upload'],
+                    filename
+                ))
+                if os.path.exists(path_file):
+                    os.remove(path_file)
+
+    def post(self, **kwargs):
+        obj = g.object
+        self.delete_files(g.model.__table__.columns, obj)
+        Repository.task_delete_object(obj)
+
+        message = self.get_success_message(obj)
+        flash(message, category='success')
+
+        return redirect(self.get_success_url())

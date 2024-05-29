@@ -1,6 +1,6 @@
 from collections.abc import Iterable
 from flask import g
-from sqlalchemy import select, insert, delete
+from sqlalchemy import select, insert, delete, update
 from sqlalchemy.orm import joinedload
 from typing import Union
 
@@ -150,8 +150,7 @@ class Repository:
             session.commit()
 
     @classmethod
-    def task_delete_object(cls, pk):
+    def task_delete_object(cls, obj):
         with session_factory() as session:
-            query = delete(g.model).filter_by(id=pk)
-            session.execute(query)
+            session.delete(obj)
             session.commit()

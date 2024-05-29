@@ -13,14 +13,16 @@ from .utils import (
 class SiteForm(FlaskForm):
     def __init__(self, obj, *args, **kwargs):
         super().__init__(obj=obj, *args, **kwargs)
+        exclude = getattr(getattr(self, 'Meta', []), 'exclude', [])
+        readonly_fields = getattr(
+            getattr(self, 'Meta', []), 'readonly_fields', []
+        )
+        self.exclude = list(exclude) + list(readonly_fields)
         try:
             fields = getattr(self.Meta, 'fields')
         except AttributeError:
             fields = None
 
-        readonly_fields = getattr(
-            getattr(self, 'Meta', []), 'readonly_fields', []
-        )
         self.instance = g.model() if obj is None else obj
         self.changed_data = []
         self.fields = []
@@ -117,13 +119,12 @@ class SiteForm(FlaskForm):
 
     def update_instance(self):
         model = g.model
-        exclude = getattr(getattr(self, 'Meta', None), 'exclude', None)
         instance = self.instance
 
         for field in self:
             if not hasattr(model, field.name) or field.name not in self.data:
                 continue
-            if exclude is not None and field.name in exclude:
+            if self.exclude is not None and field.name in self.exclude:
                 continue
             if isinstance(field, ExtendedFileField):
                 continue
@@ -141,14 +142,13 @@ class SiteForm(FlaskForm):
 
     def check_changed_data(self):
         model = g.model
-        exclude = getattr(getattr(self, 'Meta', None), 'exclude', None)
         instance = self.instance
 
         changed_fields = []
         for field in self:
             if not hasattr(model, field.name) or field.name not in self.data:
                 continue
-            if exclude is not None and field.name in exclude:
+            if self.exclude is not None and field.name in self.exclude:
                 continue
 
             if isinstance(field, ExtendedFileField):

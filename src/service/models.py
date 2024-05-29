@@ -1,5 +1,5 @@
 import datetime
-from typing import Optional
+from typing import Optional, List
 
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -103,7 +103,10 @@ class Si(BasePK, Base):
     status_service: Mapped["StatusService"] = relationship(back_populates="si")
     employee: Mapped["Employee"] = relationship(back_populates="si")
 
-    service: Mapped["Service"] = relationship(back_populates="si")
+    service: Mapped[List["Service"]] = relationship(
+        back_populates="si",
+        cascade='save-update, merge, delete',
+    )
 
     class Meta(Base.Meta):
         action_suffix = 'о'
@@ -149,7 +152,6 @@ class Si(BasePK, Base):
             'date_next_service',
             'certificate',
             'status_service',
-            'is_service',
         )
         fields_filter = (
             'group_si',
@@ -168,7 +170,6 @@ class Si(BasePK, Base):
             'date_last_service',
             'date_next_service',
             'status_service',
-            'is_service',
         )
         fields_search = (
             'group_si__name',
@@ -181,7 +182,7 @@ class Si(BasePK, Base):
             'category_etalon',
             'year_production',
             'nomenclature',
-            'status_service__name',
+            # 'status_service__name',
             # 'room_use_etalon__name',
             # 'place__name',
             # 'room_delivery__name',
@@ -230,13 +231,13 @@ class Service(BasePK, Base):
         info={'label': 'Дата следующего обслуживания'})
     certificate: Mapped[Optional[str]] = mapped_column(
         info={
-            'label': 'Сертификат',
+            'label': 'Свидетельство/сертификат',
             'type': 'FileField',
             'upload': 'certificate/',
         })
     note: Mapped[Optional[str]] = mapped_column(info={'label': 'Примечание'})
     status_service_id: Mapped[Optional[int]] = mapped_column(
-        ForeignKey("status_service.id"),
+        ForeignKey("status_service.id", ondelete="CASCADE"),
         info={'label': 'Состояние обслуживания СИ'}
     )
     is_out: Mapped[bool] = mapped_column(

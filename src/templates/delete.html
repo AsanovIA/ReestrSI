@@ -1,0 +1,25 @@
+{% extends 'base_admin.html' %}
+
+{% block extrastyle %}
+  {{ super() }}
+  <script src="{{ url_for('static', filename='js/cancel.js') }}"></script>
+{% endblock extrastyle %}
+
+{% block bodyclass %} delete-confirmation{% endblock %}
+
+{% block content %}
+    <h1>Вы уверены, что хотите удалить {{ object_name|lower }} "{{ object_url }}"? Вся история обслуживания будет удалена:</h1>
+  {% if deleted_objects %}
+    <h2>Следующие файлы будут удалены:</h2>
+    <ul id="deleted-objects">
+      {% for obj in deleted_objects %}<li>{{ obj }}</li>{% endfor %}
+    </ul>
+  {% endif %}
+    <form method="post">
+      <div>
+        <input type="hidden" name="post" value="yes">
+        <input type="submit" value="Да, я уверен">
+        <a href="#" class="button cancel-link">Нет, отменить и вернуться</a>
+      </div>
+    </form>
+{% endblock content %}

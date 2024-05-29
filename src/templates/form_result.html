@@ -19,6 +19,11 @@
           <p class="errornote">Пожалуйста, исправьте ошибки ниже.</p>
         {% endif %}
       {% include 'include/fieldset.html' %}
+      {% if btn and perm.perm_delete and btn.btn_delete %}
+        <div class="submit-row">
+          <a href="{{ delete_url }}" class="deletelink">удалить {{ object_verbose_name|lower }}</a>
+        </div>
+      {% endif %}
     </div>
   </form>
 </div>

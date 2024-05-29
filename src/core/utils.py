@@ -1,3 +1,4 @@
+import datetime
 import os
 from functools import lru_cache
 
@@ -11,7 +12,7 @@ from werkzeug.routing import BuildError
 from src.config import settings
 from src.core.constants import EMPTY_VALUE_DISPLAY
 
-DATE_FORMAT = "%Y-%m-%d"
+DATE_FORMAT = "%d.%m.%Y"
 FIELDS_EXCLUDE = ['csrf_token']
 SETTINGS_APPS = {
     'datasource': 'src.datasource',
@@ -54,6 +55,8 @@ def display_for_value(value, empty_value_display, boolean=False):
         return empty_value_display
     elif isinstance(value, bool):
         return str(value)
+    elif isinstance(value, datetime.date):
+        return datetime.datetime.strftime(value, DATE_FORMAT)
     elif isinstance(value, (list, tuple)):
         return ", ".join(str(v) for v in value)
     elif isinstance(value, Markup):

@@ -7,9 +7,7 @@ from typing import Union, List, Tuple
 
 from src.core.constants import ALL_VAR, FILTER_SUFFIX, LOOKUP_SEP, SEARCH_VAR
 from src.core.exceptions import ModelDoesNotExist
-from src.core.utils import (
-    convert_quoted_string, DATE_FORMAT
-)
+from src.core.utils import convert_quoted_string
 
 
 class Query:
@@ -101,7 +99,8 @@ class Query:
                     if not value:
                         continue
                     self.query_filter_date(filter_name, value)
-                self.query_filter_related(filter_name, value)
+                else:
+                    self.query_filter_related(filter_name, value)
 
     def query_filter_related(self, name, value):
         model = self.model
@@ -135,7 +134,7 @@ class Query:
     def query_filter_date(self, name, value):
         name = name.split(LOOKUP_SEP)
         field = getattr(self.model, name[0])
-        value = datetime.datetime.strptime(value, DATE_FORMAT).date()
+        value = datetime.datetime.strptime(value, "%Y-%m-%d").date()
         if name[-1] == 'begin':
             filter_ = field >= value
         else:

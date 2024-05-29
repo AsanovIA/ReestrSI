@@ -1,5 +1,5 @@
 from src.core.mixins import (
-    SettingsMixin, IndexMixin, ListMixin, ChangeMixin, AddMixin, DeleteMixin
+    SettingsMixin, IndexMixin, ListMixin, ChangeMixin, AddMixin
 )
 
 
@@ -16,8 +16,4 @@ class ChangeObjectView(SettingsMixin, ChangeMixin):
 
 
 class AddObjectView(SettingsMixin, AddMixin):
-    pass
-
-
-class DeleteObjectView(SettingsMixin, DeleteMixin):
     pass
