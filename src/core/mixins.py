@@ -203,6 +203,8 @@ class ListMixin(SiteMixin):
     template: str = 'list_result.html'
     fields_display: Union[List[str], Tuple[str]] = ()
     fields_link: Union[List[str], Tuple[str], None] = ()
+    fields_filter: Union[List[str], Tuple[str], None] = ()
+    fields_search: Union[List[str], Tuple[str], None] = ()
     per_page: int = 20
 
     def g_init(self):
@@ -210,8 +212,6 @@ class ListMixin(SiteMixin):
         fields_display = self.get_fields_display()
         if fields_display:
             g.fields_display = fields_display
-        elif hasattr(g.model.Meta, 'fields_display'):
-            g.fields_display = g.model.Meta.fields_display
         else:
             raise ValueError(
                 f'Не указан список полей "fields_display" отображения для '
@@ -223,11 +223,19 @@ class ListMixin(SiteMixin):
         else:
             g.fields_link = getattr(g.model.Meta, 'fields_link', ())
 
-        g.fields_filter = getattr(g.model.Meta, 'fields_filter', [])
-        g.fields_search = getattr(g.model.Meta, 'fields_search', [])
+        g.fields_filter = self.get_fields_filter()
+        g.fields_search = self.get_fields_search()
 
     def get_fields_display(self):
-        return self.fields_display
+        return self.fields_display or getattr(
+            g.model.Meta, 'fields_display', []
+        )
+
+    def get_fields_filter(self):
+        return self.fields_filter or getattr(g.model.Meta, 'fields_filter', [])
+
+    def get_fields_search(self):
+        return self.fields_search or getattr(g.model.Meta, 'fields_search', [])
 
     def get_btn(self):
         return {'btn_add': True}
@@ -602,19 +610,19 @@ class DeleteMixin(ObjectMixin):
 
         return context
 
-    def delete_files(self, columns, obj):
-        for column in columns:
+    def delete_files(self, fields, obj):
+        for field in fields:
             if (
-                    hasattr(column, 'info')
-                    and 'type' in column.info
-                    and column.info['type'] == 'FileField'
+                    hasattr(field, 'info')
+                    and 'type' in field.info
+                    and field.info['type'] == 'FileField'
             ):
-                filename = getattr(obj, column.name)
+                filename = getattr(obj, field.name)
                 if not filename:
                     continue
                 path_file = str(os.path.join(
                     current_app.config['UPLOAD_FOLDER'],
-                    column.info['upload'],
+                    field.info['upload'],
                     filename
                 ))
                 if os.path.exists(path_file):

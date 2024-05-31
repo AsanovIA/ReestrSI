@@ -30,7 +30,7 @@ class ListObjectView(ListSiView):
     ]
 
     def get_fields_display(self):
-        fields_display = [
+        return [
             'group_si',
             'name_si',
             'type_si',
@@ -48,9 +48,8 @@ class ListObjectView(ListSiView):
             'date_last_service',
             'date_next_service',
             'certificate',
-            'is_service',
+            'status_service',
         ]
-        return fields_display
 
     def get_reset_filter_url(self):
-        return try_get_url(f'.index')
+        return try_get_url('.index')

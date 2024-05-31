@@ -3,7 +3,7 @@ import os
 from flask import g
 from sqlalchemy.exc import NoResultFound
 
-from src.core.queries import Query
+from src.core import Media, Query
 from src.db.repository import Repository
 from src.core.mixins import ListMixin, ChangeMixin, AddMixin, DeleteMixin
 from src.core.utils import get_model, try_get_url, format_html
@@ -79,8 +79,6 @@ class ChangeSiView(SiMixin, ChangeMixin):
         return context
 
     def get_media(self):
-        from src.core import Media
-
         media = super().get_media()
         media += Media(js=['js/ajax.js'])
 
@@ -88,7 +86,11 @@ class ChangeSiView(SiMixin, ChangeMixin):
 
 
 class AddSiView(SiMixin, AddMixin):
-    pass
+    def get_media(self):
+        media = super().get_media()
+        media += Media(js=['js/ajax.js'])
+
+        return media
 
 
 class DeleteSiView(SiMixin, DeleteMixin):
