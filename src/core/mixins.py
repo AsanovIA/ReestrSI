@@ -218,24 +218,21 @@ class ListMixin(SiteMixin):
                 f'модели {g.model.__name__}'
             )
 
-        if self.fields_link is None or self.fields_link:
-            g.fields_link = self.fields_link
-        else:
-            g.fields_link = getattr(g.model.Meta, 'fields_link', ())
-
-        g.fields_filter = self.get_fields_filter()
-        g.fields_search = self.get_fields_search()
+        g.fields_link = self.get_attr_fields('fields_link')
+        g.fields_filter = self.get_attr_fields('fields_filter')
+        g.fields_search = self.get_attr_fields('fields_search')
 
     def get_fields_display(self):
         return self.fields_display or getattr(
             g.model.Meta, 'fields_display', []
         )
 
-    def get_fields_filter(self):
-        return self.fields_filter or getattr(g.model.Meta, 'fields_filter', [])
-
-    def get_fields_search(self):
-        return self.fields_search or getattr(g.model.Meta, 'fields_search', [])
+    def get_attr_fields(self, attr_name):
+        attr = getattr(self, attr_name)
+        if attr is None or attr:
+            return attr
+        else:
+            return getattr(g.model.Meta, attr_name, ())
 
     def get_btn(self):
         return {'btn_add': True}
@@ -550,11 +547,10 @@ class FormMixin(ObjectMixin):
                 if request.files:
                     obj = self.save_files(obj)
                 obj = self.pre_save(obj)
+                self.object_save(obj)
 
                 message = self.get_success_message(obj)
                 category = 'success'
-
-                self.object_save(obj)
 
             else:
                 message = 'Изменения отсутствуют. Сохранение отменено.'
@@ -585,7 +581,7 @@ class AddMixin(FormMixin):
         return try_get_url(
             f'.change_{self.blueprint_name}',
             model_name=self.model_name,
-            pk=g.object_id
+            pk=g.object.id
         )
 
     def object_save(self, obj):

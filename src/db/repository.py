@@ -1,6 +1,6 @@
 from collections.abc import Iterable
 from flask import g
-from sqlalchemy import select, insert, delete, update
+from sqlalchemy import select, insert, desc
 from sqlalchemy.orm import joinedload
 from typing import Union
 
@@ -101,11 +101,7 @@ class Repository:
         return result
 
     @classmethod
-    def task_get_object(
-            cls,
-            filters: Union[dict, str, int],
-            model=None,
-    ):
+    def task_get_object(cls, filters: Union[dict, str, int], model=None):
         model = model or g.model
 
         if (isinstance(filters, int)
@@ -131,23 +127,54 @@ class Repository:
         with session_factory() as session:
             session.add(obj)
             session.commit()
+            session.refresh(obj)
 
     @classmethod
     def task_add_object(cls, obj):
         with session_factory() as session:
             session.add(obj)
-            session.flush()
             session.commit()
-            g.object_id = obj.id
+            session.refresh(obj)
             g.object = obj
 
     @classmethod
-    def task_add_or_update_object(cls, obj):
+    def task_add_si_and_service(cls, obj):
+        with session_factory() as session:
+            session.add(obj)
+            session.flush()
+            g.object_service.si_id = obj.id
+            session.add(g.object_service)
+            session.commit()
+            session.refresh(obj)
+            g.object = obj
+
+    @classmethod
+    def task_update_si_and_service(cls, obj, service=None):
+        with session_factory() as session:
+            if service:
+                object_service = (
+                    session
+                    .query(service)
+                    .filter(service.si_id == obj.id)
+                    .order_by(desc(service.id))
+                    .first()
+                )
+                object_service.date_last_service = obj.date_last_service
+                object_service.date_next_service = obj.date_next_service
+                object_service.certificate = obj.certificate
+
+            session.add(obj)
+            session.commit()
+            session.refresh(obj)
+
+    @classmethod
+    def task_add_and_out_service(cls, obj):
         if not isinstance(obj, (list, tuple)):
-            obj = [obj]
+            obj = [obj, g.object_si]
         with session_factory() as session:
             session.add_all(obj)
             session.commit()
+            session.refresh(g.object_si)
 
     @classmethod
     def task_delete_object(cls, obj):

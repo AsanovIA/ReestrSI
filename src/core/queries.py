@@ -26,9 +26,9 @@ class Query:
         self.model = model or getattr(g, 'model', None)
         if self.model is None:
             raise ModelDoesNotExist('Не найдена модель для запроса')
-        self.fields_filter = fields_filter or self.get_fields_filter()
-        self.fields_search = fields_search or self.get_fields_search()
-        self.ordering = ordering or self.get_ordering()
+        self.fields_filter = [] if fields_filter is None else fields_filter
+        self.fields_search = [] if fields_search is None else fields_search
+        self.ordering = self.get_ordering(ordering)
         self.limit = limit
         self.offset = offset
         self.filters = list(filters) if filters else []
@@ -37,25 +37,12 @@ class Query:
             self.params = dict(params)
             self.construct_query()
 
-    def get_fields_filter(self):
-        try:
-            fields_filter = getattr(g, 'fields_filter')
-        except AttributeError:
-            fields_filter = getattr(self.model.Meta, 'fields_filter', [])
-        return fields_filter
-
-    def get_fields_search(self):
-        try:
-            fields_search = getattr(g, 'fields_search')
-        except AttributeError:
-            fields_search = getattr(self.model.Meta, 'fields_search', [])
-        return fields_search
-
-    def get_ordering(self):
-        try:
-            fields = getattr(g, 'ordering')
-        except AttributeError:
-            fields = getattr(self.model.Meta, 'ordering', [])
+    def get_ordering(self, fields=None):
+        if fields is None:
+            try:
+                fields = getattr(g, 'ordering')
+            except AttributeError:
+                fields = getattr(self.model.Meta, 'ordering', [])
 
         def create_ordering():
             for field in fields:

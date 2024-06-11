@@ -13,8 +13,11 @@ html[data-theme="light"],
 
     --header-color: #ffc;
     --header-branding-color: var(--accent);
-    --header-bg: #777;
+    --header-bg: #00f;
+    --header-button-hover-bg: #00a;
     --header-link-color: var(--primary-fg);
+
+    --module-caption-bg: #00f;
 
     --breadcrumbs-fg: #c4dce8;
     --breadcrumbs-link-fg: var(--body-bg);
@@ -604,19 +607,15 @@ input[type=button][disabled].default {
     color: var(--header-link-color);
 }
 
-.module.nav-sidebar caption {
-    background: var(--sidebar-caption);
-}
-
-.module.nav-sidebar caption h1 {
-    margin: 16px 0;
-}
-
 .module caption,
 .inline-group h2 {
     font-size: 0.75rem;
     letter-spacing: 0.5px;
     text-transform: uppercase;
+}
+
+.module caption {
+    background: var(--module-caption-bg);
 }
 
 .module table {
@@ -794,7 +793,7 @@ a.deletelink:focus, a.deletelink:hover {
 }
 
 .main-menu a.text:focus, .main-menu a.text:hover {
-    background-color: var(--object-tools-hover-bg);
+    background-color: var(--header-button-hover-bg);
 }
 
 /* OBJECT TOOLS */

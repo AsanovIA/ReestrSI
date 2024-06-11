@@ -48,8 +48,8 @@ class SiForm(SiteForm):
     email = StringField()
     room_delivery = ExtendedSelectField(model='Room')
     date_last_service = DateField(validators=[Optional()])
-    date_next_service = DateField(validators=[Optional()])
-    certificate = ExtendedFileField()
+    date_next_service = DateField(validators=[DataRequired()])
+    certificate = ExtendedFileField(validators=[DataRequired()])
     status_service = ExtendedSelectField(
         model='StatusService', validators=[Optional()]
     )

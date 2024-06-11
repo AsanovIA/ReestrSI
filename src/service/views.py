@@ -15,16 +15,57 @@ class SiMixin:
     def get_success_url(self):
         return try_get_url('.list_si')
 
+    def get_media(self):
+        media = super().get_media()
+        media += Media(js=['js/ajax.js'])
+
+        return media
+
+    def get_object_url(self, obj):
+        return try_get_url(
+            f'.change_{self.blueprint_name}',
+            pk=obj.id
+        )
+
 
 class ServiceMixin:
     model_name = 'service'
 
     def get_success_url(self):
-        return try_get_url(f'.list_service')
+        return try_get_url('.list_service')
+
+
+class ServiceAddOutMixin(ServiceMixin):
+    def get_object_url(self, obj):
+        return try_get_url(
+            'admin.si.change_si',
+            pk=obj.id
+        )
 
     def object_save(self, obj):
-        obj = [obj, g.object_si]
-        Repository.task_add_or_update_object(obj)
+        Repository.task_add_and_out_service(obj)
+
+    def format_message(self):
+        raise NotImplementedError(
+            f"не определен метод format_message() для {self.__class__.__name__}"
+        )
+
+    def get_success_message(self, obj):
+        obj = g.object_si
+        name_str = str(obj)
+        format_message = self.format_message()
+        obj_url = self.get_object_url(obj)
+        link_or_text = format_html(
+            '<a href="{}">{}</a>', obj_url, name_str
+        )
+        message = format_html(
+            format_message,
+            obj.Meta.verbose_name,
+            link_or_text,
+            obj.Meta.action_suffix,
+        )
+
+        return message
 
 
 class ListSiView(SiMixin, ListMixin):
@@ -78,19 +119,29 @@ class ChangeSiView(SiMixin, ChangeMixin):
 
         return context
 
-    def get_media(self):
-        media = super().get_media()
-        media += Media(js=['js/ajax.js'])
+    def object_save(self, obj):
+        service = None
+        fields_service = [
+            'date_last_service', 'date_next_service', 'certificate'
+        ]
+        if any(field.name in fields_service for field in g.form.changed_data):
+            service = get_model('service')
 
-        return media
+        Repository.task_update_si_and_service(obj, service)
 
 
 class AddSiView(SiMixin, AddMixin):
-    def get_media(self):
-        media = super().get_media()
-        media += Media(js=['js/ajax.js'])
+    def pre_save(self, obj):
+        g.object_service = get_model('service')()
+        g.object_service.date_last_service = obj.date_last_service
+        g.object_service.date_next_service = obj.date_next_service
+        g.object_service.certificate = obj.certificate
+        g.object_service.is_out = True
 
-        return media
+        return obj
+
+    def object_save(self, obj):
+        Repository.task_add_si_and_service(obj)
 
 
 class DeleteSiView(SiMixin, DeleteMixin):
@@ -175,6 +226,12 @@ class ChangeServiceView(ServiceMixin, ChangeMixin):
 
         return context
 
+    def get_object_url(self, obj):
+        return try_get_url(
+            f'.change_{self.blueprint_name}',
+            pk=obj.id
+        )
+
     def pre_save(self, obj):
         g.object_si = obj.si
         g.object_si.status_service_id = obj.status_service_id
@@ -182,7 +239,7 @@ class ChangeServiceView(ServiceMixin, ChangeMixin):
         return obj
 
 
-class OutServiceView(ServiceMixin, ChangeMixin):
+class OutServiceView(ServiceAddOutMixin, ChangeMixin):
     form_class_name = 'OutServiceForm'
 
     def g_init(self):
@@ -198,12 +255,6 @@ class OutServiceView(ServiceMixin, ChangeMixin):
 
         return context
 
-    def get_object_url(self, obj):
-        return try_get_url(
-            f'admin.si.change_si',
-            pk=obj.id
-        )
-
     def pre_save(self, obj):
         si = g.object_si
 
@@ -217,24 +268,11 @@ class OutServiceView(ServiceMixin, ChangeMixin):
 
         return obj
 
-    def get_success_message(self, obj):
-        obj = g.object_si
-        name_str = str(obj)
-        obj_url = self.get_object_url(obj)
-        link_or_text = format_html(
-            '<a href="{}">{}</a>', obj_url, name_str
-        )
-        message = format_html(
-            '{} "{}" завершил{} обслуживание.',
-            obj.Meta.verbose_name,
-            link_or_text,
-            obj.Meta.action_suffix,
-        )
-
-        return message
+    def format_message(self):
+        return '{} "{}" завершил{} обслуживание.'
 
 
-class AddServiceView(ServiceMixin, AddMixin):
+class AddServiceView(ServiceAddOutMixin, AddMixin):
     form_class_name = 'AddServiceForm'
 
     def g_init(self):
@@ -250,14 +288,8 @@ class AddServiceView(ServiceMixin, AddMixin):
 
         return context
 
-    def get_object_url(self, obj):
-        return try_get_url(
-            f'admin.si.change_si',
-            pk=obj.id
-        )
-
     def get_success_url(self):
-        return try_get_url(f'.list_si')
+        return try_get_url('.list_si')
 
     def pre_save(self, obj):
         si = g.object_si
@@ -269,30 +301,20 @@ class AddServiceView(ServiceMixin, AddMixin):
 
         return obj
 
-    def get_success_message(self, obj):
-        obj = g.object_si
-        name_str = str(obj)
-        obj_url = self.get_object_url(obj)
-        link_or_text = format_html(
-            '<a href="{}">{}</a>', obj_url, name_str
-        )
-        message = format_html(
-            '{} "{}" добавлен{} в список обслуживаемых.',
-            obj.Meta.verbose_name,
-            link_or_text,
-            obj.Meta.action_suffix,
-        )
-
-        return message
+    def format_message(self):
+        return '{} "{}" добавлен{} в список обслуживаемых.'
 
 
 class HistoryServiceView(ListMixin):
     model_name = 'service'
     fields_link = None
+    fields_search = None
 
     def get_fields_display(self):
-        model = get_model('service')
-        return model.Meta.fields_display
+        return (
+            'si', 'date_in_service', 'date_out_service', 'date_last_service',
+            'status_service', 'date_next_service', 'certificate', 'note'
+        )
 
     def get_btn(self):
         return {}
