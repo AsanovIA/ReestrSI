@@ -3,11 +3,11 @@ import sys
 
 from flask import Flask
 from flask_login import LoginManager
-
+sys.path.insert(1, os.path.join(sys.path[0], '..'))
 from src.auth.UserLogin import UserLogin
 from src.config import settings
 
-sys.path.insert(1, os.path.join(sys.path[0], '..'))
+
 from src.admin.router import router as router_admin
 from src.auth.router import router as router_auth
 from src.device.router import router as router_device
@@ -48,3 +48,5 @@ if __name__ == "__main__":
         from src.db.default.db_restore import set_default_db
 
         set_default_db()
+    else:
+        app.run()

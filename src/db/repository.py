@@ -45,10 +45,8 @@ class Repository:
     @classmethod
     def bulk_insert(cls, model, values):
         with session_factory() as session:
-            count = session.query(model).count()
-            if count == 0:
-                session.execute(insert(model), values)
-                session.commit()
+            session.execute(insert(model), values)
+            session.commit()
 
     @classmethod
     def task_count(cls, q):
