@@ -1,4 +1,4 @@
-from src.db.default.db_data import default_data
+from default_db.db_data import default_data
 from src.db.repository import Repository
 from src.core.utils import get_model
 

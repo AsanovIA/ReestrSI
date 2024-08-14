@@ -45,8 +45,19 @@ if not os.path.exists(app.config['UPLOAD_FOLDER']):
 
 if __name__ == "__main__":
     if '--db_default' in sys.argv:
-        from src.db.default.db_restore import set_default_db
+        from default_db.db_restore import set_default_db
 
         set_default_db()
+
+    elif '--db_convert' in sys.argv:
+        from create_db.restore_db import import_db
+
+        import_db()
+
+    elif '--db_clear' in sys.argv:
+        from src.db.repository import Repository
+
+        Repository.recreate_table()
+
     else:
         app.run()
