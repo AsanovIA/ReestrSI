@@ -135,12 +135,14 @@ class DescriptionMethod(BaseViewName, Base):
             'type': 'FileField',
             'upload': 'description/',
         })
+    description_hash: Mapped[Optional[str]]
     method: Mapped[Optional[str]] = mapped_column(
         info={
             'label': 'Методика поверки СИ',
             'type': 'FileField',
             'upload': 'method/',
         })
+    method_hash: Mapped[Optional[str]]
 
     si: Mapped["Si"] = relationship(back_populates="description_method")
 

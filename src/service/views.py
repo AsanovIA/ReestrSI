@@ -136,6 +136,7 @@ class AddSiView(SiMixin, AddMixin):
         g.object_service.date_last_service = obj.date_last_service
         g.object_service.date_next_service = obj.date_next_service
         g.object_service.certificate = obj.certificate
+        g.object_service.certificate_hash = obj.certificate_hash
         g.object_service.is_out = True
 
         return obj
@@ -265,6 +266,7 @@ class OutServiceView(ServiceAddOutMixin, ChangeMixin):
         si.date_last_service = obj.date_last_service
         si.date_next_service = obj.date_next_service
         si.certificate = obj.certificate
+        si.certificate_hash = obj.certificate_hash
 
         return obj
 

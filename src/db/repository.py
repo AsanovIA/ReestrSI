@@ -70,7 +70,7 @@ class Repository:
         return result
 
     @classmethod
-    def task_get_list(cls, q):
+    def task_get_list(cls, q, first=None):
         model = q.model
         filters = q.filters
         joins = q.joins
@@ -94,7 +94,10 @@ class Repository:
                 query = query.offset(offset).limit(limit)
 
             result_query = session.execute(query)
-            result = result_query.unique().scalars().all()
+            if first:
+                result = result_query.scalars().first()
+            else:
+                result = result_query.unique().scalars().all()
 
         return result
 

@@ -100,9 +100,10 @@ class FilterDateField(FilterField):
 
 class ExtendedFileField(FileField):
     widget = ExtendedFileInput()
-    MAX_LENGTH: int = 100
 
     def __init__(self, description=None, **kwargs):
+        self.allowed_extensions = settings.ALLOWED_EXTENSIONS
+        self.max_length = settings.MAX_CONTENT_LENGTH
         if description is None:
             description = self.set_description()
         super().__init__(description=description, **kwargs)
@@ -111,9 +112,9 @@ class ExtendedFileField(FileField):
         descriptions = [
             (
                 f'Допустимые расширения файлов: '
-                f'{", ".join(settings.ALLOWED_EXTENSIONS)}'
+                f'{", ".join(self.allowed_extensions)}'
             ),
-            f'Максимальная длинна имени файла {self.MAX_LENGTH}.'
+            f'Максимальная длинна имени файла {self.max_length}.'
         ]
         text = ''.join(
             '<li>{}</li>'.format(description) for description in descriptions
@@ -127,13 +128,13 @@ class ExtendedFileField(FileField):
             if '.' not in filename:
                 raise ValidationError('Отсутствует расширение файла')
             name, extension = filename.rsplit('.', 1)
-            self.allowed_extension(extension)
+            self.allow_extension(extension)
             self.length_file(name)
 
         return validation_stopped
 
-    def allowed_extension(self, extension):
-        if extension.lower() in settings.ALLOWED_EXTENSIONS:
+    def allow_extension(self, extension):
+        if extension.lower() in self.allowed_extensions:
             return
 
         raise ValidationError(
@@ -141,9 +142,9 @@ class ExtendedFileField(FileField):
         )
 
     def length_file(self, filename):
-        if len(filename) < self.MAX_LENGTH:
+        if len(filename) < self.max_length:
             return
 
         raise ValidationError(
-            f'Имя файла не должно содержать более {self.MAX_LENGTH} символов.'
+            f'Имя файла не должно содержать более {self.max_length} символов.'
         )

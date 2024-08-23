@@ -76,6 +76,7 @@ class Si(BasePK, Base):
             'type': 'FileField',
             'upload': 'certificate/',
         })
+    certificate_hash: Mapped[Optional[str]]
     status_service_id: Mapped[Optional[int]] = mapped_column(
         ForeignKey("status_service.id"),
         info={'label': 'Состояние обслуживания СИ'}
@@ -235,6 +236,7 @@ class Service(BasePK, Base):
             'type': 'FileField',
             'upload': 'certificate/',
         })
+    certificate_hash: Mapped[Optional[str]]
     note: Mapped[Optional[str]] = mapped_column(info={'label': 'Примечание'})
     status_service_id: Mapped[Optional[int]] = mapped_column(
         ForeignKey("status_service.id", ondelete="CASCADE"),

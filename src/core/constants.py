@@ -1,5 +1,6 @@
 EMPTY_VALUE_DISPLAY = '-'
 FILTER_SUFFIX = "exact"
+LIMIT_PAGE = 10
 LOOKUP_SEP = "__"
 ALL_VAR = "all"
 PAGE_VAR = "p"

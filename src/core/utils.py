@@ -1,4 +1,5 @@
 import datetime
+import hashlib
 import os
 from functools import lru_cache
 
@@ -24,6 +25,13 @@ def boolean_icon(field_val):
     display = {True: "yes", False: "no", None: "unknown"}[field_val]
     url = url_for('static', filename="img/icon-%s.svg" % display)
     return format_html('<img src="{}" alt="{}">', url, display)
+
+
+def calculate_file_hash(file, algorithm='sha256'):
+    hash_func = hashlib.new(algorithm)
+    for chunk in iter(lambda: file.read(4096), b""):
+        hash_func.update(chunk)
+    return hash_func.hexdigest()
 
 
 def convert_quoted_string(s):

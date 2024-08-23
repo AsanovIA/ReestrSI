@@ -19,7 +19,7 @@ def create_app():
 
     app.config['SECRET_KEY'] = settings.SECRET_KEY
     app.config['WTF_I18N_ENABLED'] = False
-    app.config['UPLOAD_FOLDER'] = 'uploads/'
+    app.config['UPLOAD_FOLDER'] = os.path.join(settings.BASEDIR, 'uploads')
 
     app.register_blueprint(router_admin)
     app.register_blueprint(router_auth)
@@ -50,9 +50,10 @@ if __name__ == "__main__":
         set_default_db()
 
     elif '--db_convert' in sys.argv:
-        from create_db.restore_db import import_db
+        from convert_db.restore_db import import_db, create_users
 
         import_db()
+        create_users()
 
     elif '--db_clear' in sys.argv:
         from src.db.repository import Repository
