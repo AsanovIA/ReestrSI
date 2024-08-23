@@ -19,7 +19,7 @@ def create_app():
 
     app.config['SECRET_KEY'] = settings.SECRET_KEY
     app.config['WTF_I18N_ENABLED'] = False
-    app.config['UPLOAD_FOLDER'] = os.path.join(settings.BASEDIR, 'uploads')
+    app.config['UPLOAD_FOLDER'] = settings.UPLOAD_FOLDER
 
     app.register_blueprint(router_admin)
     app.register_blueprint(router_auth)

@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     BASEDIR: str = os.path.dirname(os.path.abspath(__file__))
     ALLOWED_EXTENSIONS: List[str] = ['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif']
     MAX_CONTENT_LENGTH: int = 100
+    UPLOAD_FOLDER: str = os.path.join(BASEDIR, 'uploads')
 
     APPS: List[str] = [
         'src.datasource',
