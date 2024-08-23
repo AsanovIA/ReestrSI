@@ -31,6 +31,7 @@ def calculate_file_hash(file, algorithm='sha256'):
     hash_func = hashlib.new(algorithm)
     for chunk in iter(lambda: file.read(4096), b""):
         hash_func.update(chunk)
+    file.seek(0)
     return hash_func.hexdigest()
 
 

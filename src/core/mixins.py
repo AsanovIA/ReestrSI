@@ -517,6 +517,8 @@ class FormMixin(ObjectMixin):
         Repository.task_update_object(obj)
 
     def change_files(self, obj):
+        from src.core.utils import calculate_file_hash
+
         def needed_old_filehash():
             q = Query(filters=[
                 getattr(g.model, field_hash) == old_filehash
@@ -538,8 +540,6 @@ class FormMixin(ObjectMixin):
                 setattr(obj, field_name, None)
                 setattr(obj, field_hash, None)
             elif file.filename:
-                from src.core.utils import calculate_file_hash
-
                 new_filehash = calculate_file_hash(file)
                 if new_filehash != old_filehash:
                     if not os.path.exists(folder):
@@ -551,6 +551,7 @@ class FormMixin(ObjectMixin):
                     ])
                     if not is_used_hash:
                         filename = secure_filename(file.filename)
+                        file.seek(0)
                         file.save(os.path.join(folder, filename))
                         setattr(obj, field_name, filename)
                         setattr(obj, field_hash, new_filehash)
@@ -566,6 +567,8 @@ class FormMixin(ObjectMixin):
         return obj
 
     def light_change_files(self, obj):
+        from src.core.utils import calculate_file_hash
+
         for field_name, file in request.files.items():
             field_hash = field_name + '_hash'
             field = getattr(g.form, field_name)
@@ -580,8 +583,6 @@ class FormMixin(ObjectMixin):
                 setattr(obj, field_name, None)
                 setattr(obj, field_hash, None)
             elif file.filename:
-                from src.core.utils import calculate_file_hash
-
                 new_filehash = calculate_file_hash(file)
                 if new_filehash != old_filehash:
                     if not os.path.exists(folder):
@@ -589,6 +590,7 @@ class FormMixin(ObjectMixin):
                     if old_filehash:
                         os.remove(os.path.join(folder, old_filename))
                     filename = secure_filename(file.filename)
+                    file.seek(0)
                     file.save(os.path.join(folder, filename))
                     setattr(obj, field_name, filename)
                     setattr(obj, field_hash, new_filehash)
