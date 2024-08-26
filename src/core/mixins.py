@@ -10,7 +10,6 @@ from flask_paginate import Pagination, get_page_parameter
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Relationship
 from werkzeug.routing import BuildError
-from werkzeug.utils import secure_filename
 
 from src.config import settings
 from src.db.repository import Repository
@@ -29,6 +28,7 @@ from src.core.utils import (
     get_model,
     label_for_field,
     lookup_field,
+    secure_filename,
     try_get_url,
 )
 
@@ -303,7 +303,7 @@ class ListMixin(SiteMixin):
         return queryset
 
     def get_count_list(self):
-        return Query()
+        return Query(params=request.args)
 
     def get_paginator(self, **kwargs) -> Pagination:
         total = Repository.task_count(q=self.get_count_list())
@@ -517,15 +517,6 @@ class FormMixin(ObjectMixin):
         Repository.task_update_object(obj)
 
     def change_files(self, obj):
-        from src.core.utils import calculate_file_hash
-
-        def needed_old_filehash():
-            q = Query(filters=[
-                getattr(g.model, field_hash) == old_filehash
-            ])
-            if Repository.task_count(q) < 2:
-                os.remove(os.path.join(folder, old_filename))
-
         for field_name, file in request.files.items():
             field_hash = field_name + '_hash'
             field = getattr(g.form, field_name)
@@ -534,89 +525,20 @@ class FormMixin(ObjectMixin):
                 field.upload
             ))
             old_filename = getattr(obj, field_name)
-            old_filehash = getattr(obj, field_hash)
-            if f'{field_name}_clear' in request.form:
-                needed_old_filehash()
-                setattr(obj, field_name, None)
-                setattr(obj, field_hash, None)
-            elif file.filename:
-                new_filehash = calculate_file_hash(file)
-                if new_filehash != old_filehash:
-                    if not os.path.exists(folder):
-                        os.makedirs(folder)
-                    if old_filehash:
-                        needed_old_filehash()
-                    is_used_hash = Repository.task_exists(filters=[
-                        getattr(g.model, field_hash) == new_filehash
-                    ])
-                    if not is_used_hash:
-                        filename = secure_filename(file.filename)
-                        file.seek(0)
-                        file.save(os.path.join(folder, filename))
-                        setattr(obj, field_name, filename)
-                        setattr(obj, field_hash, new_filehash)
-                    else:
-                        q = Query(filters=[
-                            getattr(g.model, field_hash) == new_filehash,
-                        ])
-                        obj_has_hash = Repository.task_get_list(q, first=True)
-                        setattr(
-                            obj, field_name, getattr(obj_has_hash, field_name)
-                                )
-                        setattr(obj, field_hash, new_filehash)
-        return obj
-
-    def light_change_files(self, obj):
-        from src.core.utils import calculate_file_hash
-
-        for field_name, file in request.files.items():
-            field_hash = field_name + '_hash'
-            field = getattr(g.form, field_name)
-            folder = str(os.path.join(
-                current_app.config['UPLOAD_FOLDER'],
-                field.upload
-            ))
-            old_filename = getattr(obj, field_name)
-            old_filehash = getattr(obj, field_hash)
             if f'{field_name}_clear' in request.form:
                 os.remove(os.path.join(folder, old_filename))
                 setattr(obj, field_name, None)
                 setattr(obj, field_hash, None)
-            elif file.filename:
-                new_filehash = calculate_file_hash(file)
-                if new_filehash != old_filehash:
-                    if not os.path.exists(folder):
-                        os.makedirs(folder)
-                    if old_filehash:
-                        os.remove(os.path.join(folder, old_filename))
-                    filename = secure_filename(file.filename)
-                    file.seek(0)
-                    file.save(os.path.join(folder, filename))
-                    setattr(obj, field_name, filename)
-                    setattr(obj, field_hash, new_filehash)
-        return obj
-
-    def save_files(self, obj):
-        for field_name, file in request.files.items():
-            field = getattr(g.form, field_name)
-            folder = str(os.path.join(
-                current_app.config['UPLOAD_FOLDER'],
-                field.upload
-            ))
-            old_filename = getattr(obj, field_name)
-            if f'{field_name}_clear' in request.form:
-                os.remove(os.path.join(folder, old_filename))
-                setattr(obj, field_name, None)
             elif file.filename:
                 if not os.path.exists(folder):
                     os.makedirs(folder)
-                filename = secure_filename(file.filename)
-                if filename == old_filename:
-                    continue
                 if old_filename:
                     os.remove(os.path.join(folder, old_filename))
+                filename = secure_filename(file.filename)
                 file.save(os.path.join(folder, filename))
                 setattr(obj, field_name, filename)
+                setattr(obj, field_hash, field.filehash)
+
         return obj
 
     def post(self, **kwargs):

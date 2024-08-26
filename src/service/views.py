@@ -201,11 +201,11 @@ class ListServiceView(ListMixin):
 
     def get_query(self, query):
         query = super().get_query(query)
-        query += Query(filters=[g.model.is_out == False])
+        query += Query(filters=[~g.model.is_out])
         return query
 
     def get_count_list(self):
-        return Query(filters=[g.model.is_out == False])
+        return Query(filters=[~g.model.is_out])
 
 
 class ChangeServiceView(ServiceMixin, ChangeMixin):

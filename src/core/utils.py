@@ -1,13 +1,14 @@
 import datetime
 import hashlib
 import os
-from functools import lru_cache
 
+from functools import lru_cache
 from importlib import import_module
 from flask import abort, g, url_for
 from markupsafe import Markup
 from sqlalchemy import Boolean, String
 from sqlalchemy.orm import InstrumentedAttribute
+from werkzeug.utils import secure_filename as secure_filename_
 from werkzeug.routing import BuildError
 
 from src.config import settings
@@ -28,6 +29,8 @@ def boolean_icon(field_val):
 
 
 def calculate_file_hash(file, algorithm='sha256'):
+    if not file:
+        return
     hash_func = hashlib.new(algorithm)
     for chunk in iter(lambda: file.read(4096), b""):
         hash_func.update(chunk)
@@ -211,6 +214,10 @@ def value_for_field(field_name, obj):
         value = display_for_field(value, f, EMPTY_VALUE_DISPLAY)
 
     return value
+
+
+def secure_filename(filename: str) -> str:
+    return secure_filename_(filename)
 
 
 def try_get_url(endpoint: str, **kwargs):

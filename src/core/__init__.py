@@ -33,6 +33,7 @@ from src.core.utils import (
     FIELDS_EXCLUDE,
     SETTINGS_APPS,
     boolean_icon,
+    calculate_file_hash,
     display_for_field,
     display_for_value,
     format_html,
@@ -43,8 +44,9 @@ from src.core.utils import (
     label_for_field,
     lookup_field,
     value_for_field,
+    secure_filename,
     try_get_url,
     upload_for_field
 )
-from src.core.validators import Unique
+from src.core.validators import Unique, UniqueFile
 from src.core.widgets import DivWidget, ExtendedFileInput

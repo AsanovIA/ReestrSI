@@ -1,6 +1,8 @@
 from flask import g
+from werkzeug.datastructures import FileStorage
 from wtforms.validators import ValidationError
 
+from src.core import secure_filename
 from src.db.repository import Repository
 
 
@@ -16,5 +18,29 @@ class Unique:
             getattr(model, field.name) == field.data,
             model.id != instance.id,
         ]
+        if Repository.task_exists(filters):
+            raise ValidationError(self.message)
+
+
+class UniqueFile:
+    def __init__(self, message=None):
+        if not message:
+            message = 'Такой файл уже существует'
+        self.message = message
+
+    def __call__(self, form, field):
+        model, instance = g.model, form.instance
+        if not isinstance(field.data, FileStorage):
+            return
+        filename = secure_filename(field.data.filename)
+
+        filters = [
+            (model.id != instance.id)
+            & (
+                    (getattr(model, field.name) == filename)
+                    | (getattr(model, field.name + '_hash') == field.filehash)
+            )
+        ]
+
         if Repository.task_exists(filters):
             raise ValidationError(self.message)

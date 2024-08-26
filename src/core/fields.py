@@ -21,7 +21,7 @@ ALL_CHOICE = [(ALL_VAR, 'Не важно')]
 
 def get_choices_for_model(model_name):
     model = get_model(model_name)
-    query = Query(model=model, filters=[model.view == True])
+    query = Query(model=model, filters=[model.view])
     choices = [
         (str(obj.id), obj) for obj in Repository.task_get_list(q=query)
     ]
@@ -104,16 +104,19 @@ class ExtendedFileField(FileField):
     def __init__(self, description=None, **kwargs):
         self.allowed_extensions = settings.ALLOWED_EXTENSIONS
         self.max_length = settings.MAX_CONTENT_LENGTH
+        self.allowed_symbols = settings.ALLOWED_SYMBOLS_CONTENT
         if description is None:
             description = self.set_description()
+        self.filename = None
+        self.filehash = None
         super().__init__(description=description, **kwargs)
 
     def set_description(self):
         descriptions = [
-            (
-                f'Допустимые расширения файлов: '
-                f'{", ".join(self.allowed_extensions)}'
-            ),
+            f'Допустимые символы в имени файла: '
+            f'{", ".join(self.allowed_symbols)}',
+            f'Допустимые расширения файлов: '
+            f'{", ".join(self.allowed_extensions)}',
             f'Максимальная длинна имени файла {self.max_length}.'
         ]
         text = ''.join(
@@ -127,9 +130,9 @@ class ExtendedFileField(FileField):
         if filename:
             if '.' not in filename:
                 raise ValidationError('Отсутствует расширение файла')
-            name, extension = filename.rsplit('.', 1)
+            basename, extension = filename.rsplit('.', 1)
             self.allow_extension(extension)
-            self.length_file(name)
+            self.length_filename(basename)
 
         return validation_stopped
 
@@ -141,7 +144,7 @@ class ExtendedFileField(FileField):
             f'расширение файла "{extension}" не допустимо.'
         )
 
-    def length_file(self, filename):
+    def length_filename(self, filename):
         if len(filename) < self.max_length:
             return
 

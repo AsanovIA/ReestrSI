@@ -3,7 +3,9 @@ from wtforms import (
 )
 from wtforms.validators import Length, NumberRange, Optional, DataRequired
 
-from src.core import SiteForm, ExtendedFileField, ExtendedSelectField
+from src.core import (
+    SiteForm, ExtendedFileField, ExtendedSelectField, UniqueFile
+)
 
 
 class SiForm(SiteForm):
@@ -49,7 +51,7 @@ class SiForm(SiteForm):
     room_delivery = ExtendedSelectField(model='Room')
     date_last_service = DateField(validators=[Optional()])
     date_next_service = DateField(validators=[DataRequired()])
-    certificate = ExtendedFileField(validators=[DataRequired()])
+    certificate = ExtendedFileField(validators=[DataRequired(), UniqueFile()])
     status_service = ExtendedSelectField(
         model='StatusService', validators=[Optional()]
     )
@@ -70,7 +72,7 @@ class ServiceForm(SiteForm):
         model='StatusService',
         validators=[DataRequired()]
     )
-    certificate = ExtendedFileField()
+    certificate = ExtendedFileField(validators=[UniqueFile()])
     note = TextAreaField(
         validators=[Length(max=1000)], description='максимум 1000 символов'
     )
@@ -93,7 +95,7 @@ class OutServiceForm(SiteForm):
 
     date_out_service = DateField(validators=[DataRequired()])
     date_next_service = DateField(validators=[DataRequired()])
-    certificate = ExtendedFileField(validators=[DataRequired()])
+    certificate = ExtendedFileField(validators=[DataRequired(), UniqueFile()])
     note = TextAreaField(
         validators=[Length(max=1000)], description='максимум 1000 символов'
     )

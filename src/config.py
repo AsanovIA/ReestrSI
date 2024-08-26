@@ -16,6 +16,9 @@ class Settings(BaseSettings):
 
     BASEDIR: str = os.path.dirname(os.path.abspath(__file__))
     ALLOWED_EXTENSIONS: List[str] = ['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif']
+    ALLOWED_SYMBOLS_CONTENT: List[str] = [
+        '"A-Z"', '"a-z"', '"0-9"', '"_"', '"-"', 'точка "."'
+    ]
     MAX_CONTENT_LENGTH: int = 100
     UPLOAD_FOLDER: str = os.path.join(BASEDIR, 'uploads')
 

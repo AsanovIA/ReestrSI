@@ -108,7 +108,7 @@ class Query:
             if value:
                 filter_ = field == int(value)
             else:
-                filter_ = field == None
+                filter_ = field.is_(None)
         except AttributeError:
             field = getattr(self.model, name)
             if isinstance(field.type, Boolean):

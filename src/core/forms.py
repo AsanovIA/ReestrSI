@@ -2,11 +2,12 @@ import os
 
 from flask import g, request
 from flask_wtf import FlaskForm
-from werkzeug.utils import secure_filename
+from werkzeug.datastructures import FileStorage
 
 from . import ExtendedFileField, ExtendedSelectField
 from .utils import (
-    FIELDS_EXCLUDE, label_for_field, try_get_url, upload_for_field
+    FIELDS_EXCLUDE, calculate_file_hash, label_for_field,
+    secure_filename, try_get_url, upload_for_field,
 )
 
 
@@ -41,8 +42,12 @@ class SiteForm(FlaskForm):
             if isinstance(field, ExtendedFileField):
                 self.is_multipart = True
                 field.upload = upload_for_field(field.name)
-                if request.method == 'POST':
+                if (
+                        request.method == 'POST'
+                        and isinstance(field.data, FileStorage)
+                ):
                     value = getattr(field.data, 'filename', None)
+                    field.filehash = calculate_file_hash(field.data)
                 else:
                     value = field.data
                 if not value:
@@ -157,6 +162,7 @@ class SiteForm(FlaskForm):
                         filename
                         and hasattr(instance, field.name)
                         and filename != getattr(instance, field.name)
+                        and field.filehash != getattr(instance, field.name + '_hash')
                         or f'{field.name}_clear' in request.form
                 ):
                     changed_fields.append(field)
