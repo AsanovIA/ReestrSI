@@ -3,8 +3,14 @@ from typing import Optional, List
 
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from src.db.database import Base, BasePK
+from src.db.database import Base, BasePK, str_1000
 from src.core.utils import value_for_field
+
+LABEL_FIELD = {
+    'date_last_service': 'Дата последнего обслуживания',
+    'date_next_service': 'Дата следующего обслуживания',
+    'certificate': 'Свидетельство/сертификат',
+}
 
 
 class Si(BasePK, Base):
@@ -40,15 +46,17 @@ class Si(BasePK, Base):
     )
     etalon: Mapped[bool] = mapped_column(info={'label': 'Эталон'})
     category_etalon: Mapped[Optional[str]] = mapped_column(
-        info={'label': 'Разряд/КТ'})
+        info={'label': 'Разряд/КТ'}
+    )
     year_production: Mapped[Optional[int]] = mapped_column(
         info={
             'check': 'LENGTH(year_production) = 4',
             'label': 'Год выпуска',
-        },
+        }
     )
     nomenclature: Mapped[Optional[str]] = mapped_column(
-        info={'label': 'Номенклатурный номер'})
+        info={'label': 'Номенклатурный номер'}
+    )
     room_use_etalon_id: Mapped[Optional[int]] = mapped_column(
         ForeignKey("room.id", ondelete="CASCADE"),
         info={'label': '№ помещения, в котором применяется эталон'}
@@ -66,23 +74,13 @@ class Si(BasePK, Base):
         ForeignKey("room.id", ondelete="CASCADE"),
         info={'label': '№ помещения где можно получить СИ после обслуживания'}
     )
-    date_last_service: Mapped[Optional[datetime.date]] = mapped_column(
-        info={'label': 'Дата последнего обслуживания'})
-    date_next_service: Mapped[Optional[datetime.date]] = mapped_column(
-        info={'label': 'Дата следующего обслуживания'})
-    certificate: Mapped[Optional[str]] = mapped_column(
-        info={
-            'label': 'Свидетельство/сертификат',
-            'type': 'FileField',
-            'upload': 'certificate/',
-        })
-    certificate_hash: Mapped[Optional[str]]
-    status_service_id: Mapped[Optional[int]] = mapped_column(
-        ForeignKey("status_service.id"),
+    status_service: Mapped[Optional[str]] = mapped_column(
         info={'label': 'Состояние обслуживания СИ'}
     )
     is_service: Mapped[bool] = mapped_column(
-        info={'label': 'На обслуживании'}, default=False)
+        info={'label': 'На обслуживании'},
+        default=False
+    )
 
     group_si: Mapped["GroupSi"] = relationship(back_populates="si")
     name_si: Mapped["NameSi"] = relationship(back_populates="si")
@@ -101,7 +99,6 @@ class Si(BasePK, Base):
     room_delivery: Mapped["Room"] = relationship(
         foreign_keys=[room_delivery_id],
     )
-    status_service: Mapped["StatusService"] = relationship(back_populates="si")
     employee: Mapped["Employee"] = relationship(back_populates="si")
 
     service: Mapped[List["Service"]] = relationship(
@@ -114,7 +111,7 @@ class Si(BasePK, Base):
         verbose_name = 'Средство измерения'
         verbose_name_plural = 'Средства измерения'
 
-        select_related = (
+        joined_related = (
             'group_si',
             'name_si',
             'type_si',
@@ -124,9 +121,9 @@ class Si(BasePK, Base):
             'place',
             'room_use_etalon',
             'room_delivery',
-            'status_service',
             'employee',
             'employee__division',
+            'service',
         )
         fields_display = (
             'group_si',
@@ -168,9 +165,8 @@ class Si(BasePK, Base):
             'room_delivery',
             'employee',
             'employee__division',
-            'date_last_service',
-            'date_next_service',
-            'status_service',
+            'service__date_last_service',
+            'service__date_next_service',
         )
         fields_search = (
             'group_si__name',
@@ -183,7 +179,6 @@ class Si(BasePK, Base):
             'category_etalon',
             'year_production',
             'nomenclature',
-            # 'status_service__name',
             # 'room_use_etalon__name',
             # 'place__name',
             # 'room_delivery__name',
@@ -196,6 +191,9 @@ class Si(BasePK, Base):
     def __str__(self):
         return self.number
 
+    def data_service(self, field_name):
+        return getattr(self.service[-2 if self.is_service else -1], field_name)
+
     def division(self):
         return self.employee.division
 
@@ -203,15 +201,30 @@ class Si(BasePK, Base):
         return self.employee.email
 
     def description(self):
-        return value_for_field('description_method__description', self)
+        value = self.description_method.description
+        return value_for_field(value, 'description_method__description')
 
     def method(self):
-        return value_for_field('description_method__method', self)
+        value = self.description_method.method
+        return value_for_field(value, 'description_method__method')
+
+    def date_last_service(self):
+        return self.data_service('date_last_service')
+
+    def date_next_service(self):
+        return self.data_service('date_next_service')
+
+    def certificate(self):
+        value = self.data_service('certificate')
+        return value_for_field(value, 'service__certificate')
 
     division.short_description = 'Подразделение'
     email.short_description = 'e-mail'
     description.short_description = 'Описание типа СИ'
     method.short_description = 'Методика поверки СИ'
+    date_last_service.short_description = LABEL_FIELD['date_last_service']
+    date_next_service.short_description = LABEL_FIELD['date_next_service']
+    certificate.short_description = LABEL_FIELD['certificate']
 
 
 class Service(BasePK, Base):
@@ -223,27 +236,36 @@ class Service(BasePK, Base):
         info={'label': 'Средство измерения'}
     )
     date_in_service: Mapped[Optional[datetime.date]] = mapped_column(
-        info={'label': 'Дата поступления на обслуживание'})
+        info={'label': 'Дата поступления на обслуживание'}
+    )
     date_out_service: Mapped[Optional[datetime.date]] = mapped_column(
-        info={'label': 'Дата возврата с обслуживания'})
+        info={'label': 'Дата возврата с обслуживания'}
+    )
     date_last_service: Mapped[Optional[datetime.date]] = mapped_column(
-        info={'label': 'Дата последнего обслуживания'})
+        info={'label': LABEL_FIELD['date_last_service']}
+    )
     date_next_service: Mapped[Optional[datetime.date]] = mapped_column(
-        info={'label': 'Дата следующего обслуживания'})
+        info={'label': LABEL_FIELD['date_next_service']}
+    )
     certificate: Mapped[Optional[str]] = mapped_column(
         info={
-            'label': 'Свидетельство/сертификат',
+            'label': LABEL_FIELD['certificate'],
             'type': 'FileField',
             'upload': 'certificate/',
-        })
+        }
+    )
     certificate_hash: Mapped[Optional[str]]
-    note: Mapped[Optional[str]] = mapped_column(info={'label': 'Примечание'})
+    note: Mapped[Optional[str_1000]] = mapped_column(
+        info={'label': 'Примечание'}
+    )
     status_service_id: Mapped[Optional[int]] = mapped_column(
         ForeignKey("status_service.id", ondelete="CASCADE"),
         info={'label': 'Состояние обслуживания СИ'}
     )
     is_out: Mapped[bool] = mapped_column(
-        info={'label': 'Выдан'}, default=False)
+        info={'label': 'Выдан'},
+        default=False
+    )
 
     si: Mapped["Si"] = relationship(back_populates="service")
     status_service: Mapped["StatusService"] = relationship(
@@ -255,7 +277,7 @@ class Service(BasePK, Base):
         verbose_name = 'Обслуживание СИ'
         verbose_name_plural = 'Обслуживание СИ'
         ordering = ('date_in_service',)
-        select_related = ('si', 'status_service')
+        joined_related = ('si', 'status_service')
         fields_display = (
             'si', 'date_in_service', 'date_last_service', 'status_service',
             'date_next_service', 'certificate', 'note'

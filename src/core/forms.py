@@ -12,32 +12,28 @@ from .utils import (
 
 
 class SiteForm(FlaskForm):
-    def __init__(self, obj, *args, **kwargs):
+    def __init__(self, obj=None, *args, **kwargs):
         super().__init__(obj=obj, *args, **kwargs)
+        self.instance = obj or g.model()
         exclude = getattr(getattr(self, 'Meta', []), 'exclude', [])
-        readonly_fields = getattr(
-            getattr(self, 'Meta', []), 'readonly_fields', []
-        )
+        readonly_fields = self.get_readonly_fields()
         self.exclude = list(exclude) + list(readonly_fields)
-        try:
-            fields = getattr(self.Meta, 'fields')
-        except AttributeError:
-            fields = None
-
-        self.instance = g.model() if obj is None else obj
         self.changed_data = []
         self.fields = []
+        fields = getattr(self.Meta, 'fields', None)
 
         def set_attributes():
             #  Установка label полей формы
             field.label.text = label_for_field(field.name, form=self) + ':'
+
+            field.label_class = {}
             if getattr(field.flags, 'required', None):
                 field.label_class = {'class': 'required'}
-            else:
-                field.label_class = {}
-            field.is_readonly = (
-                True if field.name in readonly_fields else False
-            )
+
+            field.is_readonly = False
+            if field.name in readonly_fields:
+                field.is_readonly = True
+                field.description = ''
 
             if isinstance(field, ExtendedFileField):
                 self.is_multipart = True
@@ -62,7 +58,7 @@ class SiteForm(FlaskForm):
                 value = getattr(self.instance, f'{field.name}_id', None)
                 if request.method == 'POST':
                     value = self.data[field.name]
-                field.data = str(value)
+                field.data = str(value) if value is not None else ''
 
         if fields:
             for field_name in fields:
@@ -75,6 +71,13 @@ class SiteForm(FlaskForm):
                     continue
                 self.fields.append(field)
                 set_attributes()
+
+    def get_readonly_fields(self, readonly_fields=None):
+        if readonly_fields is None:
+            readonly_fields = []
+        return getattr(
+            getattr(self, 'Meta', []), 'readonly_fields', []
+        ) + readonly_fields
 
     def contents(self, field):
         from sqlalchemy.orm import Relationship
@@ -126,7 +129,7 @@ class SiteForm(FlaskForm):
         model = g.model
         instance = self.instance
 
-        for field in self:
+        for field in self.fields:
             if not hasattr(model, field.name) or field.name not in self.data:
                 continue
             if self.exclude is not None and field.name in self.exclude:
@@ -150,7 +153,7 @@ class SiteForm(FlaskForm):
         instance = self.instance
 
         changed_fields = []
-        for field in self:
+        for field in self.fields:
             if not hasattr(model, field.name) or field.name not in self.data:
                 continue
             if self.exclude is not None and field.name in self.exclude:
@@ -158,11 +161,12 @@ class SiteForm(FlaskForm):
 
             if isinstance(field, ExtendedFileField):
                 filename = secure_filename(request.files[field.name].filename)
+                old_filename = getattr(instance, field.name, None)
+                old_filehash = getattr(instance, field.name + '_hash', None)
                 if (
                         filename
-                        and hasattr(instance, field.name)
-                        and filename != getattr(instance, field.name)
-                        and field.filehash != getattr(instance, field.name + '_hash')
+                        and filename != old_filename
+                        and field.filehash != old_filehash
                         or f'{field.name}_clear' in request.form
                 ):
                     changed_fields.append(field)
@@ -171,12 +175,12 @@ class SiteForm(FlaskForm):
             value = self.data[field.name]
             if isinstance(field, ExtendedSelectField):
                 value = int(value) if value else None
-                if value != getattr(instance, f'{field.name}_id'):
-                    changed_fields.append(field)
-
+                old_value = getattr(instance, f'{field.name}_id')
             else:
                 value = value if value != '' else None
-                if value != getattr(instance, field.name):
-                    changed_fields.append(field)
+                old_value = getattr(instance, field.name)
+
+            if value != old_value:
+                changed_fields.append(field)
 
         return changed_fields

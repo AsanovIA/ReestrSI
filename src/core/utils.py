@@ -198,17 +198,19 @@ def lookup_field(name, obj):
     return f, attr, value
 
 
-def value_for_field(field_name, obj):
-    fields = field_name.split('__') if '__' in field_name else [field_name]
-    value = f = None
-    if fields and len(fields) > 1:
+def value_for_field(value, field_name):
+    from src.core import LOOKUP_SEP
+
+    f = None
+    if LOOKUP_SEP in field_name:
+        fields = field_name.split(LOOKUP_SEP)
+    else:
+        fields = field_name
+    try:
         model = get_model(fields[-2])
         f = getattr(model, fields[-1])
-    for field in fields:
-        value = getattr(obj, field, None)
-        if not value:
-            break
-        obj = value
+    except (AttributeError, IndexError):
+        raise 'неверное значение связанных моделей'
 
     if f and hasattr(f, 'type'):
         value = display_for_field(value, f, EMPTY_VALUE_DISPLAY)

@@ -6,7 +6,7 @@ from wtforms.validators import Length, Email, Optional, DataRequired, \
     EqualTo, InputRequired, ValidationError
 
 from src.auth import password_validation
-from src.core import DivWidget, SiteForm, Unique
+from src.core import MAX_LENGTH, DivWidget, SiteForm, Unique
 
 
 class ReadOnlyPasswordHashWidget(DivWidget):
@@ -41,8 +41,8 @@ class ReadOnlyPasswordHashField(Field):
 
 class UserProfileForm(SiteForm):
     username = StringField(
-        validators=[DataRequired(), Length(max=100), Unique()],
-        description='максимум 100 символов'
+        validators=[DataRequired(), Length(max=MAX_LENGTH), Unique()],
+        description=f'максимум {MAX_LENGTH} символов'
     )
     password = ReadOnlyPasswordHashField(
         description='Пароли хранятся в зашифрованном виде, поэтому нет '
@@ -51,16 +51,16 @@ class UserProfileForm(SiteForm):
                     '<a href="{}">эту форму</a>.'
     )
     last_name = StringField(
-        validators=[DataRequired(), Length(max=100)],
-        description='максимум 100 символов'
+        validators=[DataRequired(), Length(max=MAX_LENGTH)],
+        description=f'максимум {MAX_LENGTH} символов'
     )
     first_name = StringField(
-        validators=[DataRequired(), Length(max=100)],
-        description='максимум 100 символов'
+        validators=[DataRequired(), Length(max=MAX_LENGTH)],
+        description=f'максимум {MAX_LENGTH} символов'
     )
     middle_name = StringField(
-        validators=[DataRequired(), Length(max=100)],
-        description='максимум 100 символов'
+        validators=[DataRequired(), Length(max=MAX_LENGTH)],
+        description=f'максимум {MAX_LENGTH} символов'
     )
     email = EmailField(
         validators=[
@@ -83,8 +83,8 @@ class UserProfileForm(SiteForm):
 
 class AddUserForm(SiteForm):
     username = StringField(
-        validators=[DataRequired(), Length(max=100), Unique()],
-        description='максимум 100 символов'
+        validators=[DataRequired(), Length(max=MAX_LENGTH), Unique()],
+        description=f'максимум {MAX_LENGTH} символов'
     )
     password = PasswordField(
         validators=[
@@ -99,16 +99,16 @@ class AddUserForm(SiteForm):
         description='Для подтверждения введите, пожалуйста, пароль ещё раз.'
     )
     last_name = StringField(
-        validators=[DataRequired(), Length(max=100)],
-        description='максимум 100 символов'
+        validators=[DataRequired(), Length(max=MAX_LENGTH)],
+        description=f'максимум {MAX_LENGTH} символов'
     )
     first_name = StringField(
-        validators=[DataRequired(), Length(max=100)],
-        description='максимум 100 символов'
+        validators=[DataRequired(), Length(max=MAX_LENGTH)],
+        description=f'максимум {MAX_LENGTH} символов'
     )
     middle_name = StringField(
-        validators=[DataRequired(), Length(max=100)],
-        description='максимум 100 символов'
+        validators=[DataRequired(), Length(max=MAX_LENGTH)],
+        description=f'максимум {MAX_LENGTH} символов'
     )
     email = EmailField(
         validators=[

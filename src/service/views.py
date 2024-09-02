@@ -5,12 +5,23 @@ from sqlalchemy.exc import NoResultFound
 
 from src.core import Media, Query
 from src.db.repository import Repository
-from src.core.mixins import ListMixin, ChangeMixin, AddMixin, DeleteMixin
+from src.core.mixins import (
+    ListMixin, ChangeMixin, AddMixin, DeleteMixin, FormMixin
+)
 from src.core.utils import get_model, try_get_url, format_html
+
+IS_EXPLOITED_SI = 'Эксплуатируется'
+REGISTRATION_SI = 'Регистрация'
 
 
 class SiMixin:
     model_name = 'si'
+    extra_fields = (
+        'date_last_service',
+        'date_next_service',
+        'certificate',
+        'certificate_hash',
+    )
 
     def get_success_url(self):
         return try_get_url('.list_si')
@@ -35,15 +46,12 @@ class ServiceMixin:
         return try_get_url('.list_service')
 
 
-class ServiceAddOutMixin(ServiceMixin):
+class ServiceAddOutMixin(ServiceMixin, FormMixin):
     def get_object_url(self, obj):
         return try_get_url(
             'admin.si.change_si',
             pk=obj.id
         )
-
-    def object_save(self, obj):
-        Repository.task_add_and_out_service(obj)
 
     def format_message(self):
         raise NotImplementedError(
@@ -79,6 +87,17 @@ class ListSiView(SiMixin, ListMixin):
 
 
 class ChangeSiView(SiMixin, ChangeMixin):
+
+    def get_object(self):
+        obj = super().get_object()
+        model = g.model
+        lookup_model = model.service.property.entity.class_
+        index = -2 if obj.is_service else -1
+        for field in self.extra_fields:
+            setattr(obj, field, getattr(obj.service[index], field))
+            setattr(model, field, getattr(lookup_model, field))
+
+        return obj
 
     def get_btn(self):
         btn = super().get_btn()
@@ -119,30 +138,40 @@ class ChangeSiView(SiMixin, ChangeMixin):
 
         return context
 
-    def object_save(self, obj):
-        service = None
-        fields_service = [
-            'date_last_service', 'date_next_service', 'certificate'
-        ]
-        if any(field.name in fields_service for field in g.form.changed_data):
-            service = get_model('service')
+    def pre_save(self, obj):
+        obj = super().pre_save(obj)
+        index = -2 if obj.is_service else -1
+        for field in self.extra_fields:
+            setattr(obj.service[index], field, getattr(obj, field))
 
-        Repository.task_update_si_and_service(obj, service)
+        return obj
 
 
 class AddSiView(SiMixin, AddMixin):
+
+    def get_object(self):
+        model = g.model
+        lookup_model = model.service.property.entity.class_
+        for field in self.extra_fields:
+            setattr(model, field, getattr(lookup_model, field))
+
+        return None
+
     def pre_save(self, obj):
-        g.object_service = get_model('service')()
-        g.object_service.date_last_service = obj.date_last_service
-        g.object_service.date_next_service = obj.date_next_service
-        g.object_service.certificate = obj.certificate
-        g.object_service.certificate_hash = obj.certificate_hash
-        g.object_service.is_out = True
+        object_service = get_model('service')()
+        object_service.date_last_service = obj.date_last_service
+        object_service.date_next_service = obj.date_next_service
+        object_service.certificate = obj.certificate
+        object_service.certificate_hash = obj.certificate_hash
+        object_service.is_out = True
+        object_service.note = REGISTRATION_SI
+        obj.status_service = IS_EXPLOITED_SI
+        g.object_service = object_service
 
         return obj
 
     def object_save(self, obj):
-        Repository.task_add_si_and_service(obj)
+        Repository.task_add_si(obj)
 
 
 class DeleteSiView(SiMixin, DeleteMixin):
@@ -223,7 +252,7 @@ class ChangeServiceView(ServiceMixin, ChangeMixin):
         )
         context['service_url'] = try_get_url('.out_service', pk=self.pk)
         context['link_text'] = 'Выдать СИ'
-        context['content_title'] = f'обслуживание средства измерения: {str(si)}'
+        context['content_title'] = f'Средство измерения: {str(si)}'
 
         return context
 
@@ -235,9 +264,11 @@ class ChangeServiceView(ServiceMixin, ChangeMixin):
 
     def pre_save(self, obj):
         g.object_si = obj.si
-        g.object_si.status_service_id = obj.status_service_id
 
         return obj
+
+    def object_save(self, obj):
+        Repository.task_update_service(obj, get_model('StatusService'))
 
 
 class OutServiceView(ServiceAddOutMixin, ChangeMixin):
@@ -258,17 +289,15 @@ class OutServiceView(ServiceAddOutMixin, ChangeMixin):
 
     def pre_save(self, obj):
         si = g.object_si
+        si.is_service = False
+        si.status_service = IS_EXPLOITED_SI
 
         obj.is_out = True
 
-        si.is_service = False
-        si.status_service_id = None
-        si.date_last_service = obj.date_last_service
-        si.date_next_service = obj.date_next_service
-        si.certificate = obj.certificate
-        si.certificate_hash = obj.certificate_hash
-
         return obj
+
+    def object_save(self, obj):
+        Repository.task_out_service(obj)
 
     def format_message(self):
         return '{} "{}" завершил{} обслуживание.'
@@ -296,12 +325,14 @@ class AddServiceView(ServiceAddOutMixin, AddMixin):
     def pre_save(self, obj):
         si = g.object_si
         si.is_service = True
-        si.status_service_id = obj.status_service_id
 
         obj.si_id = si.id
-        obj.date_last_service = si.date_next_service
+        obj.date_last_service = si.service[-1].date_next_service
 
         return obj
+
+    def object_save(self, obj):
+        Repository.task_add_service(obj)
 
     def format_message(self):
         return '{} "{}" добавлен{} в список обслуживаемых.'
@@ -314,8 +345,14 @@ class HistoryServiceView(ListMixin):
 
     def get_fields_display(self):
         return (
-            'si', 'date_in_service', 'date_out_service', 'date_last_service',
-            'status_service', 'date_next_service', 'certificate', 'note'
+            'si',
+            'date_in_service',
+            'date_last_service',
+            'status_service',
+            'date_next_service',
+            'date_out_service',
+            'certificate',
+            'note'
         )
 
     def get_btn(self):

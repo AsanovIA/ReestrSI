@@ -1,20 +1,15 @@
 from collections.abc import Iterable
 from flask import g
-from sqlalchemy import select, insert, desc
-from sqlalchemy.orm import joinedload
+from sqlalchemy import select, insert
+from sqlalchemy.orm import joinedload, selectinload
 from typing import Union
 
 from src.db.database import Base, engine, session_factory
 
 
 def get_options_load(model):
-    def get_related_model():
-        try:
-            select_related = model.Meta.select_related
-        except AttributeError:
-            return
-
-        for field_name in select_related:
+    def generate_options():
+        def related_model(field_name, func_load):
             try:
                 field = getattr(model, field_name)
             except AttributeError:
@@ -24,15 +19,35 @@ def get_options_load(model):
                     field = getattr(lookup_model, path_part)
                     lookup_model = field.property.entity.class_
                     if index == 0:
-                        join_load = joinedload(field)
+                        result_load = func_load(field)
                     else:
-                        join_load = join_load.joinedload(field)
+                        attr = getattr(result_load, func_load.__name__)
+                        result_load = attr(field)
             else:
-                join_load = joinedload(field)
+                result_load = func_load(field)
 
-            yield join_load
+            return result_load
 
-    return list(get_related_model())
+        try:
+            joined_related = model.Meta.joined_related
+        except AttributeError:
+            joined_related = None
+        try:
+            select_in_related = model.Meta.select_in_related
+        except AttributeError:
+            select_in_related = None
+
+        if not joined_related and not select_in_related:
+            return
+
+        if joined_related:
+            for field_name in joined_related:
+                yield related_model(field_name, joinedload)
+        if select_in_related:
+            for field_name in select_in_related:
+                yield related_model(field_name, selectinload)
+
+    return list(generate_options())
 
 
 class Repository:
@@ -119,7 +134,7 @@ class Repository:
             options_load = get_options_load(model)
             query = query.options(*options_load)
 
-            result = session.execute(query).scalar_one()
+            result = session.execute(query).unique().scalar_one()
 
         return result
 
@@ -139,7 +154,7 @@ class Repository:
             g.object = obj
 
     @classmethod
-    def task_add_si_and_service(cls, obj):
+    def task_add_si(cls, obj):
         with session_factory() as session:
             session.add(obj)
             session.flush()
@@ -150,30 +165,35 @@ class Repository:
             g.object = obj
 
     @classmethod
-    def task_update_si_and_service(cls, obj, service=None):
+    def task_out_service(cls, obj):
+        objs = [obj, g.object_si]
         with session_factory() as session:
-            if service:
-                object_service = (
-                    session
-                    .query(service)
-                    .filter(service.si_id == obj.id)
-                    .order_by(desc(service.id))
-                    .first()
-                )
-                object_service.date_last_service = obj.date_last_service
-                object_service.date_next_service = obj.date_next_service
-                object_service.certificate = obj.certificate
-
-            session.add(obj)
+            session.add_all(objs)
             session.commit()
             session.refresh(obj)
 
     @classmethod
-    def task_add_and_out_service(cls, obj):
-        if not isinstance(obj, (list, tuple)):
-            obj = [obj, g.object_si]
+    def task_update_service(cls, obj, status):
         with session_factory() as session:
-            session.add_all(obj)
+            obj = session.merge(obj)
+            g.object_si = session.merge(g.object_si)
+            object_status = (
+                session
+                .query(status)
+                .filter(status.id == obj.status_service_id)
+                .one()
+            )
+            g.object_si.status_service = object_status.name
+            session.commit()
+            session.refresh(g.object_si)
+
+    @classmethod
+    def task_add_service(cls, obj):
+        with session_factory() as session:
+            objs = [obj, g.object_si]
+            session.add_all(objs)
+            session.flush()
+            g.object_si.status_service = obj.status_service.name
             session.commit()
             session.refresh(g.object_si)
 

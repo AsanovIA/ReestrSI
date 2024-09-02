@@ -15,7 +15,9 @@ class BaseView(BasePK):
 
 class BaseViewName(BaseView):
     name: Mapped[str_256] = mapped_column(
-        info={'label': 'Наименование'}, unique=True)
+        info={'label': 'Наименование'},
+        unique=True
+    )
 
     class Meta:
         ordering = ('name',)
@@ -116,7 +118,6 @@ class StatusService(BaseViewName, Base):
     """Состояние обслуживания СИ"""
     __tablename__ = "status_service"
 
-    si: Mapped["Si"] = relationship(back_populates="status_service")
     service: Mapped["Service"] = relationship(back_populates="status_service")
 
     class Meta(BaseViewName.Meta, Base.Meta):
@@ -134,14 +135,16 @@ class DescriptionMethod(BaseViewName, Base):
             'label': 'Описание типа СИ',
             'type': 'FileField',
             'upload': 'description/',
-        })
+        }
+    )
     description_hash: Mapped[Optional[str]]
     method: Mapped[Optional[str]] = mapped_column(
         info={
             'label': 'Методика поверки СИ',
             'type': 'FileField',
             'upload': 'method/',
-        })
+        }
+    )
     method_hash: Mapped[Optional[str]]
 
     si: Mapped["Si"] = relationship(back_populates="description_method")
@@ -171,13 +174,18 @@ class Employee(BaseView, Base):
     __tablename__ = "employee"
 
     last_name: Mapped[str_100] = mapped_column(
-        info={'label': 'Фамилия'})
+        info={'label': 'Фамилия'}
+    )
     first_name: Mapped[Optional[str_100]] = mapped_column(
-        info={'label': 'Имя'})
+        info={'label': 'Имя'}
+    )
     middle_name: Mapped[Optional[str_100]] = mapped_column(
-        info={'label': 'Отчество'})
+        info={'label': 'Отчество'}
+    )
     email: Mapped[Optional[str]] = mapped_column(
-        info={'label': 'e-mail'}, unique=True)
+        unique=True,
+        info={'label': 'e-mail'}
+    )
     division_id: Mapped[Optional[int]] = mapped_column(
         ForeignKey("division.id", ondelete="CASCADE"),
         info={'label': 'Подразделение'},
@@ -191,7 +199,7 @@ class Employee(BaseView, Base):
         verbose_name = 'Ответственное лицо'
         verbose_name_plural = 'Ответственные лица'
         ordering = ('last_name', 'first_name', 'middle_name')
-        select_related = ('division',)
+        joined_related = ('division',)
         fields_display = ('__str__', 'email', 'division')
         fields_search = (
             'last_name', 'first_name', 'middle_name', 'division__name'

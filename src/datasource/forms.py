@@ -2,7 +2,8 @@ from wtforms import StringField, EmailField, BooleanField
 from wtforms.validators import Length, Email, InputRequired, Optional
 
 from src.core import (
-    SiteForm, ExtendedFileField, ExtendedSelectField, Unique, UniqueFile
+    MAX_LENGTH, SiteForm, ExtendedFileField, ExtendedSelectField, Unique,
+    UniqueFile
 )
 
 
@@ -74,16 +75,16 @@ class EmployeeForm(FieldViewForm):
     """Ответственное лицо (сотрудник)"""
 
     last_name = StringField(
-        validators=[InputRequired(), Length(max=100)],
-        description='максимум 100 символов'
+        validators=[InputRequired(), Length(max=MAX_LENGTH)],
+        description=f'максимум {MAX_LENGTH} символов'
     )
     first_name = StringField(
-        validators=[InputRequired(), Length(max=100)],
-        description='максимум 100 символов'
+        validators=[InputRequired(), Length(max=MAX_LENGTH)],
+        description=f'максимум {MAX_LENGTH} символов'
     )
     middle_name = StringField(
-        validators=[InputRequired(), Length(max=100)],
-        description='максимум 100 символов'
+        validators=[InputRequired(), Length(max=MAX_LENGTH)],
+        description=f'максимум {MAX_LENGTH} символов'
     )
     email = EmailField(
         validators=[
@@ -96,6 +97,10 @@ class EmployeeForm(FieldViewForm):
 
     class Meta:
         fields = (
-            'last_name', 'first_name', 'middle_name', 'email', 'division',
+            'last_name',
+            'first_name',
+            'middle_name',
+            'email',
+            'division',
             'view'
         )

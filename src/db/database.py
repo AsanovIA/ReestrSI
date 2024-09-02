@@ -25,12 +25,14 @@ elif NAMESUBD == 'postgres':
 
 str_100 = Annotated[str, 100]
 str_256 = Annotated[str, 256]
+str_1000 = Annotated[str, 1000]
 
 
 class Base(DeclarativeBase):
     type_annotation_map = {
         str_100: String(100),
         str_256: String(256),
+        str_1000: String(1000),
     }
 
     repr_cols_num = 3
