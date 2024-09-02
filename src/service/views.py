@@ -148,6 +148,7 @@ class ChangeSiView(SiMixin, ChangeMixin):
 
 
 class AddSiView(SiMixin, AddMixin):
+    form_class_name = 'AddSiForm'
 
     def get_object(self):
         model = g.model

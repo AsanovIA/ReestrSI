@@ -16,8 +16,8 @@ class SiteForm(FlaskForm):
         super().__init__(obj=obj, *args, **kwargs)
         self.instance = obj or g.model()
         exclude = getattr(getattr(self, 'Meta', []), 'exclude', [])
-        readonly_fields = self.get_readonly_fields()
-        self.exclude = list(exclude) + list(readonly_fields)
+        self.readonly_fields = list(self.get_readonly_fields())
+        self.exclude = list(exclude) + FIELDS_EXCLUDE
         self.changed_data = []
         self.fields = []
         fields = getattr(self.Meta, 'fields', None)
@@ -31,7 +31,7 @@ class SiteForm(FlaskForm):
                 field.label_class = {'class': 'required'}
 
             field.is_readonly = False
-            if field.name in readonly_fields:
+            if field.name in self.readonly_fields:
                 field.is_readonly = True
                 field.description = ''
 
@@ -67,7 +67,7 @@ class SiteForm(FlaskForm):
                 set_attributes()
         else:
             for field in self:
-                if field.name in FIELDS_EXCLUDE:
+                if field.name in self.exclude:
                     continue
                 self.fields.append(field)
                 set_attributes()
@@ -134,6 +134,8 @@ class SiteForm(FlaskForm):
                 continue
             if self.exclude is not None and field.name in self.exclude:
                 continue
+            if self.readonly_fields and field.name in self.readonly_fields:
+                continue
             if isinstance(field, ExtendedFileField):
                 continue
 
@@ -157,6 +159,8 @@ class SiteForm(FlaskForm):
             if not hasattr(model, field.name) or field.name not in self.data:
                 continue
             if self.exclude is not None and field.name in self.exclude:
+                continue
+            if self.readonly_fields and field.name in self.readonly_fields:
                 continue
 
             if isinstance(field, ExtendedFileField):

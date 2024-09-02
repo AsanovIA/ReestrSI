@@ -71,6 +71,11 @@ class SiForm(SiteForm):
         return super().get_readonly_fields(readonly_fields)
 
 
+class AddSiForm(SiForm):
+    class Meta(SiForm.Meta):
+        exclude = ['status_service']
+
+
 class ServiceForm(SiteForm):
     """Обслуживание СИ"""
 
