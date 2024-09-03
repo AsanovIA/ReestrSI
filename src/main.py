@@ -50,7 +50,7 @@ if __name__ == "__main__":
         set_default_db()
 
     elif '--db_convert' in sys.argv:
-        from convert_db.restore_db import import_db, create_users
+        from convert_db.convert_excel_to_db import import_db, create_users
 
         import_db()
         create_users()

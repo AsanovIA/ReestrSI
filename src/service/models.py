@@ -130,7 +130,6 @@ class Si(BasePK, Base):
             'name_si',
             'type_si',
             'number',
-            'description_method',
             'description',
             'method',
             'service_type',

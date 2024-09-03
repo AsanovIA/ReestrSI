@@ -16,8 +16,8 @@ class ListObjectView(ListSiView):
         'room_delivery',
         'employee',
         'employee__division',
-        'date_last_service',
-        'date_next_service',
+        'service__date_last_service',
+        'service__date_next_service',
         'is_service',
     ]
     fields_search = [
