@@ -294,6 +294,7 @@ class OutServiceView(ServiceAddOutMixin, ChangeMixin):
         si.status_service = IS_EXPLOITED_SI
 
         obj.is_out = True
+        obj.status_service_id = None
 
         return obj
 
@@ -359,10 +360,13 @@ class HistoryServiceView(ListMixin):
     def get_btn(self):
         return {}
 
+    def filters_query(self):
+        return [g.model.si_id == self.pk, g.model.is_out]
+
     def get_query(self, query):
         query = super().get_query(query)
-        query += Query(filters=[g.model.si_id == self.pk])
+        query += Query(filters=self.filters_query())
         return query
 
     def get_count_list(self):
-        return Query(filters=[g.model.si_id == self.pk])
+        return Query(filters=self.filters_query())
