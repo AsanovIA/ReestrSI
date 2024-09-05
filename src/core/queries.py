@@ -91,13 +91,12 @@ class Query:
                 else:
                     self.query_filter_related(filter_name, value)
 
-    def query_filter_related(self, name, value):
-        model = self.model
-        if LOOKUP_SEP in name:
-            lookup_fields = name.split(LOOKUP_SEP)
+    def lookup_field_related(self, model, field_name):
+        if LOOKUP_SEP in field_name:
+            lookup_fields = field_name.split(LOOKUP_SEP)
             for index, path_part in enumerate(lookup_fields):
+                field_name = path_part
                 field = getattr(model, path_part)
-                name = path_part
                 if (
                         isinstance(field.property, Relationship)
                         and index < len(lookup_fields) - 1
@@ -105,14 +104,20 @@ class Query:
                     model = field.property.entity.class_
                     self.joins.add(field)
 
+        return model, field_name
+
+    def query_filter_related(self, field_name, value):
+        model = self.model
+        model, field_name = self.lookup_field_related(model, field_name)
+
         try:
-            field = getattr(model, name + '_id')
+            field = getattr(model, field_name + '_id')
             if value:
                 filter_ = field == int(value)
             else:
                 filter_ = field.is_(None)
         except AttributeError:
-            field = getattr(self.model, name)
+            field = getattr(self.model, field_name)
             if isinstance(field.type, Boolean):
                 filter_ = field == int(value)
             else:
@@ -121,8 +126,9 @@ class Query:
         self.filters.append(filter_)
 
     def query_filter_date(self, name, value):
-        name = name.split(LOOKUP_SEP)
-        field = getattr(self.model, name[0])
+        name = name.rsplit(LOOKUP_SEP, maxsplit=1)
+        model, field_name = self.lookup_field_related(self.model, name[0])
+        field = getattr(model, field_name)
         value = datetime.datetime.strptime(value, "%Y-%m-%d").date()
         if name[-1] == 'begin':
             filter_ = field >= value
