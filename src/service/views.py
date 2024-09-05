@@ -229,13 +229,10 @@ class ListServiceView(ListMixin):
     def get_url_for_result(self, result):
         return try_get_url(f'.change_{self.blueprint_name}', pk=result.id)
 
-    def get_query(self, query):
+    def get_query(self, query=None):
         query = super().get_query(query)
         query += Query(filters=[~g.model.is_out])
         return query
-
-    def get_count_list(self):
-        return Query(filters=[~g.model.is_out])
 
 
 class ChangeServiceView(ServiceMixin, ChangeMixin):
@@ -360,13 +357,7 @@ class HistoryServiceView(ListMixin):
     def get_btn(self):
         return {}
 
-    def filters_query(self):
-        return [g.model.si_id == self.pk, g.model.is_out]
-
-    def get_query(self, query):
+    def get_query(self, query=None):
         query = super().get_query(query)
-        query += Query(filters=self.filters_query())
+        query += Query(filters=[g.model.si_id == self.pk, g.model.is_out])
         return query
-
-    def get_count_list(self):
-        return Query(filters=self.filters_query())

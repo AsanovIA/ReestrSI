@@ -23,9 +23,8 @@ class FilterForm:
             field_name = name
             if LOOKUP_SEP in name:
                 lookup_fields = name.split(LOOKUP_SEP)
-                for index, path_part in enumerate(lookup_fields):
-                    field = getattr(model, path_part)
-                    field_name = path_part
+                for index, field_name in enumerate(lookup_fields):
+                    field = getattr(model, field_name)
                     if (
                             isinstance(field.property, Relationship)
                             and index < len(lookup_fields) - 1

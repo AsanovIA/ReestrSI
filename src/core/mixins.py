@@ -292,7 +292,9 @@ class ListMixin(SiteMixin):
         text += ', '.join(labels)
         return text + '.'
 
-    def get_query(self, query):
+    def get_query(self, query=None):
+        if query is None:
+            query = Query()
         if not request.args:
             return query
         query += Query(params=request.args, fields_search=g.fields_search)
@@ -302,11 +304,8 @@ class ListMixin(SiteMixin):
         queryset = Repository.task_get_list(q=self.get_query(query))
         return queryset
 
-    def get_count_list(self):
-        return Query(params=request.args)
-
     def get_paginator(self, **kwargs) -> Pagination:
-        total = Repository.task_count(q=self.get_count_list())
+        total = Repository.task_count(q=self.get_query())
         return Pagination(
             page_parameter=PAGE_VAR,
             total=total,

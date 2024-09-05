@@ -68,8 +68,7 @@ class Query:
         combined.limit = self.limit
         combined.offset = self.offset
         combined.filters = self.filters[:]
-        combined.joins = self.joins.copy()
-        combined.joins.union(other.joins)
+        combined.joins = self.joins.union(other.joins)
         for item in other.filters:
             if item not in self.filters:
                 combined.filters.append(item)

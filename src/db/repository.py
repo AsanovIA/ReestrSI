@@ -66,9 +66,13 @@ class Repository:
     @classmethod
     def task_count(cls, q):
         model = q.model
+        joins = q.joins
         filters = q.filters
         with session_factory() as session:
             query = session.query(model)
+            if joins and isinstance(joins, Iterable):
+                for j in joins:
+                    query = query.join(j)
             if filters:
                 query = query.filter(*filters)
             result = query.count()
