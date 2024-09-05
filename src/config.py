@@ -38,7 +38,7 @@ class Settings(BaseSettings):
         {'NAME': 'src.auth.password_validation.NumericPasswordValidator'},
     ]
 
-    LANGUAGE: str = 'ru'
+    LANGUAGES: List[str] = ['ru', 'en']
     SITE_NAME: str = 'Средства измерения'
 
     @property

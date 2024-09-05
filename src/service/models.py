@@ -3,8 +3,9 @@ from typing import Optional, List
 
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from src.core import LOOKUP_SEP, value_for_field
 from src.db.database import Base, BasePK, str_1000
-from src.core.utils import value_for_field
 
 LABEL_FIELD = {
     'date_last_service': 'Дата последнего обслуживания',
@@ -122,7 +123,7 @@ class Si(BasePK, Base):
             'room_use_etalon',
             'room_delivery',
             'employee',
-            'employee__division',
+            'employee' + LOOKUP_SEP + 'division',
             'service',
         )
         fields_display = (
@@ -163,16 +164,16 @@ class Si(BasePK, Base):
             'control_vp',
             'room_delivery',
             'employee',
-            'employee__division',
-            'service__date_last_service',
-            'service__date_next_service',
+            'employee' + LOOKUP_SEP + 'division',
+            'service' + LOOKUP_SEP + 'date_last_service',
+            'service' + LOOKUP_SEP + 'date_next_service',
         )
         fields_search = (
-            'group_si__name',
-            'name_si__name',
-            'type_si__name',
+            'group_si' + LOOKUP_SEP + 'name',
+            'name_si' + LOOKUP_SEP + 'name',
+            'type_si' + LOOKUP_SEP + 'name',
             'number',
-            'description_method__name',
+            'description_method' + LOOKUP_SEP + 'name',
             # 'service_type__name',
             # 'service_interval__name',
             'category_etalon',
@@ -201,11 +202,15 @@ class Si(BasePK, Base):
 
     def description(self):
         value = self.description_method.description
-        return value_for_field(value, 'description_method__description')
+        return value_for_field(
+            value, 'description_method' + LOOKUP_SEP + 'description'
+        )
 
     def method(self):
         value = self.description_method.method
-        return value_for_field(value, 'description_method__method')
+        return value_for_field(
+            value, 'description_method' + LOOKUP_SEP + 'method'
+        )
 
     def date_last_service(self):
         return self.data_service('date_last_service')

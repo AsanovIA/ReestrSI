@@ -295,7 +295,7 @@ class ListMixin(SiteMixin):
     def get_query(self, query):
         if not request.args:
             return query
-        query += Query(params=request.args)
+        query += Query(params=request.args, fields_search=g.fields_search)
         return query
 
     def get_queryset(self, query):
@@ -489,7 +489,7 @@ class FormMixin(ObjectMixin):
 
     def get_form_kwargs(self):
         kwargs = {
-            'meta': {'locales': [settings.LANGUAGE]},
+            'meta': {'locales': settings.LANGUAGES},
             'obj': g.object,
         }
         return kwargs

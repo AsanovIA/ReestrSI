@@ -9,10 +9,17 @@ from src.core.utils import label_for_field
 
 class FilterForm:
     def __init__(self):
-        self.filters = []
+        self.fields_filter = g.fields_filter
+        self.model = g.model
+        self.filters = self.construct_filters()
+
+    def __iter__(self):
+        return iter(self.filters)
+
+    def construct_filters(self):
         relation_filters, boolean_filters, date_filters = [], [], []
-        for name in g.fields_filter:
-            model = g.model
+        for name in self.fields_filter:
+            model = self.model
             field_name = name
             if LOOKUP_SEP in name:
                 lookup_fields = name.split(LOOKUP_SEP)
@@ -28,8 +35,8 @@ class FilterForm:
             field = getattr(model, field_name)
             title = label_for_field(field_name, model=field.class_)
 
-            filter_name = '%s__%s' % (name, FILTER_SUFFIX)
-            id = '%s__id' % name
+            filter_name = '%s%s%s' % (name, LOOKUP_SEP, FILTER_SUFFIX)
+            id = '%s%sid' % (name, LOOKUP_SEP)
             data = request.args.get(filter_name)
             kwargs = {
                 'field_name': name,
@@ -54,10 +61,7 @@ class FilterForm:
             else:
                 raise Exception(f'Фильтра для {field.key} нет')
 
-        self.filters = relation_filters + boolean_filters + date_filters
-
-    def __iter__(self):
-        return iter(self.filters)
+        return relation_filters + boolean_filters + date_filters
 
 
 class ListFilter:
@@ -95,11 +99,21 @@ class DateListFilter(ListFilter):
     def __init__(self, field_name, **kwargs):
         super().__init__(**kwargs)
         self.type = 'date'
-        self.fields = []
-        for suffix in ['__begin', '__end']:
+        self.fields = self.create_begin_end(field_name)
+
+    def __iter__(self):
+        for field in self.fields:
+            self.field = field
+            yield
+
+    def create_begin_end(self, field_name):
+        fields = []
+        for suffix in [LOOKUP_SEP + 'begin', LOOKUP_SEP + 'end']:
             field_name_suffix = field_name + suffix
-            filter_name = '%s__%s' % (field_name_suffix, FILTER_SUFFIX)
-            id = '%s__id' % field_name_suffix
+            filter_name = '%s%s%s' % (field_name_suffix,
+                                      LOOKUP_SEP,
+                                      FILTER_SUFFIX)
+            id = '%s%sid' % (field_name_suffix, LOOKUP_SEP)
             data = request.args.get(filter_name, '')
             self.options.update({
                 'name': filter_name,
@@ -107,9 +121,6 @@ class DateListFilter(ListFilter):
                 'data': data
             })
             field = FilterDateField(**self.options)
-            self.fields.append(field)
+            fields.append(field)
 
-    def __iter__(self):
-        for field in self.fields:
-            self.field = field
-            yield
+        return fields

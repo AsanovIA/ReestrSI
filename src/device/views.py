@@ -1,4 +1,4 @@
-from src.core import try_get_url
+from src.core import LOOKUP_SEP, try_get_url
 from src.service.views import ListSiView
 
 
@@ -15,15 +15,15 @@ class ListObjectView(ListSiView):
         'control_vp',
         'room_delivery',
         'employee',
-        'employee__division',
-        'service__date_last_service',
-        'service__date_next_service',
+        'employee' + LOOKUP_SEP + 'division',
+        'service' + LOOKUP_SEP + 'date_last_service',
+        'service' + LOOKUP_SEP + 'date_next_service',
         'is_service',
     ]
     fields_search = [
-        'group_si__name',
-        'name_si__name',
-        'type_si__name',
+        'group_si' + LOOKUP_SEP + 'name',
+        'name_si' + LOOKUP_SEP + 'name',
+        'type_si' + LOOKUP_SEP + 'name',
         'number',
         'year_production',
         'nomenclature',

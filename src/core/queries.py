@@ -82,7 +82,10 @@ class Query:
 
             elif FILTER_SUFFIX in param and value != ALL_VAR:
                 filter_name = param.rsplit(LOOKUP_SEP, maxsplit=1)[0]
-                if any(filter_name.endswith(s) for s in ['__begin', '__end']):
+                if any(
+                        filter_name.endswith(s)
+                        for s in [LOOKUP_SEP + 'begin', LOOKUP_SEP + 'end']
+                ):
                     if not value:
                         continue
                     self.query_filter_date(filter_name, value)
