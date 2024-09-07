@@ -4,6 +4,7 @@
   <div class="module current-app">
     <div id="reset-filter"><a href="{{ reset_filter_url }}">Сбросить фильтры</a></div>
     <form id="changelist-filter" method="get" name="filter">
+      <input type="submit" class="default" value='Применить'>
       {% for filter in filters %}
         <table class="filter">
           <caption>{{ filter.title }}</caption>
@@ -18,7 +19,10 @@
           </tr>
         </table>
       {% endfor %}
-      <input type="submit" class="default" value='Выбрать'>
+      {% if filters | length > 8 %}
+        <input type="submit" class="default" value='Применить'>
+      {% endif %}
+
     </form>
   </div>
 </nav>

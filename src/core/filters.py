@@ -16,6 +16,9 @@ class FilterForm:
     def __iter__(self):
         return iter(self.filters)
 
+    def __len__(self):
+        return len(self.filters)
+
     def construct_filters(self):
         relation_filters, boolean_filters, date_filters = [], [], []
         for name in self.fields_filter:

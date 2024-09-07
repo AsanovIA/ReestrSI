@@ -13,7 +13,7 @@ class ListObjectView(ListSiView):
         'service_interval',
         'place',
         'control_vp',
-        'room_delivery',
+        # 'room_delivery',
         'employee',
         'employee' + LOOKUP_SEP + 'division',
         'service' + LOOKUP_SEP + 'date_last_service',
@@ -25,8 +25,9 @@ class ListObjectView(ListSiView):
         'name_si' + LOOKUP_SEP + 'name',
         'type_si' + LOOKUP_SEP + 'name',
         'number',
-        'year_production',
-        'nomenclature',
+        'employee' + LOOKUP_SEP + 'last_name',
+        'employee' + LOOKUP_SEP + 'first_name',
+        'employee' + LOOKUP_SEP + 'middle_name',
     ]
 
     def get_fields_display(self):
@@ -41,7 +42,7 @@ class ListObjectView(ListSiView):
             'service_interval',
             'place',
             'control_vp',
-            'room_delivery',
+            # 'room_delivery',
             'employee',
             'division',
             'email',

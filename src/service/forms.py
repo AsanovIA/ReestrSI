@@ -54,8 +54,8 @@ class SiForm(SiteForm):
     email = StringField()
     room_delivery = ExtendedSelectField(model='Room')
     date_last_service = DateField(validators=[Optional()])
-    date_next_service = DateField(validators=[DataRequired()])
-    certificate = ExtendedFileField(validators=[DataRequired(), UniqueFile()])
+    date_next_service = DateField(validators=[Optional()])
+    certificate = ExtendedFileField(validators=[UniqueFile()])
     status_service = StringField()
 
     class Meta:
@@ -64,7 +64,7 @@ class SiForm(SiteForm):
         ]
 
     def get_readonly_fields(self, readonly_fields=None):
-        if self.instance.is_service:
+        if self.instance.is_service or not self.instance.service:
             readonly_fields = [
                 'date_last_service', 'date_next_service', 'certificate'
             ]
@@ -72,6 +72,9 @@ class SiForm(SiteForm):
 
 
 class AddSiForm(SiForm):
+    date_next_service = DateField(validators=[DataRequired()])
+    certificate = ExtendedFileField(validators=[DataRequired(), UniqueFile()])
+
     class Meta(SiForm.Meta):
         exclude = ['status_service']
 

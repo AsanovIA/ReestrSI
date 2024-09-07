@@ -92,9 +92,9 @@ class ChangeSiView(SiMixin, ChangeMixin):
         obj = super().get_object()
         model = g.model
         lookup_model = model.service.property.entity.class_
-        index = -2 if obj.is_service else -1
         for field in self.extra_fields:
-            setattr(obj, field, getattr(obj.service[index], field))
+            value = obj.data_service(field)
+            setattr(obj, field, value)
             setattr(model, field, getattr(lookup_model, field))
 
         return obj
@@ -326,7 +326,7 @@ class AddServiceView(ServiceAddOutMixin, AddMixin):
         si.is_service = True
 
         obj.si_id = si.id
-        obj.date_last_service = si.service[-1].date_next_service
+        obj.date_last_service = si.data_service('date_next_service')
 
         return obj
 

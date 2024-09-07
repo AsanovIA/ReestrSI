@@ -120,6 +120,7 @@
     left: 10%;
     background-color: var(--sidebar-bt);
     margin: 0px 10%;
+    margin-bottom: 10px;
 /*    color: var(--body-fg);*/
 }
 

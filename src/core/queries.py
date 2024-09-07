@@ -76,7 +76,7 @@ class Query:
 
     def construct_query(self):
         for param, value in self.params.items():
-            if param == SEARCH_VAR:
+            if param == SEARCH_VAR and len(value) > 2:
                 self.query_search(value)
 
             elif FILTER_SUFFIX in param and value != ALL_VAR:

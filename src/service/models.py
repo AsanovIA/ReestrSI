@@ -174,25 +174,32 @@ class Si(BasePK, Base):
             'type_si' + LOOKUP_SEP + 'name',
             'number',
             'description_method' + LOOKUP_SEP + 'name',
-            # 'service_type__name',
-            # 'service_interval__name',
+            # 'service_type' + LOOKUP_SEP + 'name',
+            # 'service_interval' + LOOKUP_SEP + 'name',
             'category_etalon',
             'year_production',
             'nomenclature',
-            # 'room_use_etalon__name',
+            # 'room_use_etalon' + LOOKUP_SEP + 'name',
             # 'place__name',
-            # 'room_delivery__name',
-            # 'employee__last_name',
-            # 'employee__first_name',
-            # 'employee__middle_name',
-            # 'employee__division__name',
+            # 'room_delivery' + LOOKUP_SEP + 'name',
+            # 'employee' + LOOKUP_SEP + 'last_name',
+            # 'employee' + LOOKUP_SEP + 'first_name',
+            # 'employee' + LOOKUP_SEP + 'middle_name',
+            # 'employee' + LOOKUP_SEP + 'division' + LOOKUP_SEP + 'name',
         )
 
     def __str__(self):
         return self.number
 
     def data_service(self, field_name):
-        return getattr(self.service[-2 if self.is_service else -1], field_name)
+        try:
+            data = getattr(
+                self.service[-2 if self.is_service else -1], field_name
+            )
+        except IndexError:
+            data = None
+
+        return data
 
     def division(self):
         return self.employee.division
