@@ -283,7 +283,7 @@ class ListMixin(SiteMixin):
         return context
 
     def get_search_help_text(self):
-        text = 'Поиск минимум по 3 символам в полях: '
+        text = 'Поиск по: '
         labels = []
         for field_name in g.fields_search:
             label = label_for_field(field_name.split(LOOKUP_SEP)[0])

@@ -66,10 +66,14 @@ class Repository:
     @classmethod
     def task_count(cls, q):
         model = q.model
+        outer_joins = q.outer_joins
         joins = q.joins
         filters = q.filters
         with session_factory() as session:
             query = session.query(model)
+            if outer_joins and isinstance(outer_joins, Iterable):
+                for j in outer_joins:
+                    query = query.outerjoin(j)
             if joins and isinstance(joins, Iterable):
                 for j in joins:
                     query = query.join(j)
@@ -92,6 +96,7 @@ class Repository:
     def task_get_list(cls, q, first=None):
         model = q.model
         filters = q.filters
+        outer_joins = q.outer_joins
         joins = q.joins
         ordering = q.ordering
         limit = q.limit
@@ -100,6 +105,9 @@ class Repository:
         with session_factory() as session:
             query = select(model).select_from(model)
 
+            if outer_joins and isinstance(outer_joins, Iterable):
+                for j in outer_joins:
+                    query = query.outerjoin(j)
             if joins and isinstance(joins, Iterable):
                 for j in joins:
                     query = query.join(j)

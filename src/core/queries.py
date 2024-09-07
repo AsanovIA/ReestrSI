@@ -15,10 +15,10 @@ class Query:
             self,
             model=None,
             params=None,
-            fields_filter: Union[List[str], Tuple[str], None] = None,
             fields_search: Union[List[str], Tuple[str], None] = None,
             ordering: Union[List[str], Tuple[str], None] = None,
             filters: Union[list, tuple, None] = None,
+            outer_joins: Union[list, None] = None,
             joins: Union[list, None] = None,
             limit: int = None,
             offset: int = 0,
@@ -26,12 +26,12 @@ class Query:
         self.model = model or getattr(g, 'model', None)
         if self.model is None:
             raise ModelDoesNotExist('Не найдена модель для запроса')
-        self.fields_filter = [] if fields_filter is None else fields_filter
         self.fields_search = [] if fields_search is None else fields_search
         self.ordering = self.get_ordering(ordering)
         self.limit = limit
         self.offset = offset
         self.filters = list(filters) if filters else []
+        self.outer_joins = set(outer_joins) if outer_joins else set()
         self.joins = set(joins) if joins else set()
         if params:
             self.params = dict(params)
@@ -62,12 +62,12 @@ class Query:
     def __add__(self, other):
         combined = Query()
         combined.model = self.model
-        combined.fields_filter = self.fields_filter[:]
         combined.fields_search = self.fields_search[:]
         combined.ordering = self.ordering[:]
         combined.limit = self.limit
         combined.offset = self.offset
         combined.filters = self.filters[:]
+        combined.outer_joins = self.outer_joins.union(other.outer_joins)
         combined.joins = self.joins.union(other.joins)
         for item in other.filters:
             if item not in self.filters:
@@ -76,7 +76,7 @@ class Query:
 
     def construct_query(self):
         for param, value in self.params.items():
-            if param == SEARCH_VAR and len(value) > 2:
+            if param == SEARCH_VAR and value.strip():
                 self.query_search(value)
 
             elif FILTER_SUFFIX in param and value != ALL_VAR:
@@ -152,7 +152,7 @@ class Query:
                     field = getattr(model, path_part)
                     if isinstance(field.property, Relationship):
                         model = field.property.entity.class_
-                        self.joins.add(field)
+                        self.outer_joins.add(field)
                         continue
                     or_queries.append(field.ilike(f'%{value}%'))
 

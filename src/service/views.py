@@ -177,12 +177,14 @@ class AddSiView(SiMixin, AddMixin):
 
 class DeleteSiView(SiMixin, DeleteMixin):
 
+    @property
+    def service(self):
+        return get_model('service')
+
     def get_deleted_objects(self):
-        model = get_model('service')
-        query = Query(model=model, filters=[model.si_id == self.pk])
-        history_list = Repository.task_get_list(query)
+        history_list = self.get_history_list()
         list_files = []
-        field = model.certificate
+        field = self.service.certificate
         for obj in history_list:
             filename = getattr(obj, field.name)
             if not filename:
@@ -197,6 +199,15 @@ class DeleteSiView(SiMixin, DeleteMixin):
 
         return list_files
 
+    def get_history_list(self):
+        query = Query(
+            model=self.service,
+            filters=[self.service.si_id == self.pk]
+        )
+        history_list = Repository.task_get_list(query)
+
+        return history_list
+
     def get_object_url(self, obj):
         return try_get_url(
             f'.change_{self.blueprint_name}',
@@ -210,11 +221,9 @@ class DeleteSiView(SiMixin, DeleteMixin):
         return context
 
     def post(self, **kwargs):
-        model = get_model('service')
-        query = Query(model=model, filters=[model.si_id == self.pk])
-        history_list = Repository.task_get_list(query)
+        history_list = self.get_history_list()
         for obj in history_list:
-            self.delete_files(model.__table__.columns, obj)
+            self.delete_files(self.service.__table__.columns, obj)
 
         return super().post(**kwargs)
 
