@@ -13,3 +13,5 @@ __pycache__/
 .dockerignore
 Dockerfile
 uploads/
+files/
+convert_db/
