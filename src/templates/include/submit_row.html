@@ -1,5 +1,7 @@
-{% if btn and perm.perm_change %}
+{% if btn %}
 <div class="submit-row">
+
+  {% if perm.perm_change %}
 
     {% if btn.btn_save %}
     {# Сохранить объект и перенаправить #}
@@ -15,6 +17,8 @@
     {# Настраиваемая кнопка изменения объекта #}
     <input type="submit" name="_change" class="default" value="{{ btn.btn_text }}">
     {% endif %}
+
+  {% endif %}
 
     {% if btn.btn_log %}
     {# Перенаправление на страницу лога изменений объекта #}
