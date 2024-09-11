@@ -1,11 +1,8 @@
-from werkzeug.security import generate_password_hash
-from wtforms.fields import (
-    BooleanField, EmailField, Field, PasswordField, StringField,
-)
-from wtforms.validators import Length, Email, Optional, DataRequired, \
-    EqualTo, InputRequired, ValidationError
+from flask import g
+from wtforms.fields import BooleanField, EmailField, Field, StringField
+from wtforms.validators import Length, Email, Optional, DataRequired
 
-from src.auth import password_validation
+from src.auth.forms import PasswordChangeForm
 from src.core import MAX_LENGTH, DivWidget, SiteForm, Unique
 
 
@@ -73,88 +70,35 @@ class UserProfileForm(SiteForm):
         description='Отметьте, если пользователь должен считаться активным. '
                     'Уберите эту отметку вместо удаления учётной записи.'
     )
+    is_superuser = BooleanField(
+        description='Указывает, что пользователь имеет все права без явного '
+                    'их назначения.'
+    )
+
+    class Meta:
+        pass
 
     def __init__(self, *args, **kwargs):
+        if not g.user.is_superuser:
+            self.Meta.exclude = ['is_superuser']
         super().__init__(*args, **kwargs)
         password = self.password
         if password.data:
             password.description = password.description.format('./password/')
 
 
-class AddUserForm(SiteForm):
-    username = StringField(
-        validators=[DataRequired(), Length(max=MAX_LENGTH), Unique()],
-        description=f'максимум {MAX_LENGTH} символов'
-    )
-    password = PasswordField(
-        validators=[
-            InputRequired(),
-            EqualTo(fieldname='password2', message='Пароли не совпадают'),
-        ],
-        description=password_validation.password_validators_description_html(),
-    )
-    password2 = PasswordField(
-        label='Подтверждение пароля',
-        validators=[InputRequired()],
-        description='Для подтверждения введите, пожалуйста, пароль ещё раз.'
-    )
-    last_name = StringField(
-        validators=[DataRequired(), Length(max=MAX_LENGTH)],
-        description=f'максимум {MAX_LENGTH} символов'
-    )
-    first_name = StringField(
-        validators=[DataRequired(), Length(max=MAX_LENGTH)],
-        description=f'максимум {MAX_LENGTH} символов'
-    )
-    middle_name = StringField(
-        validators=[DataRequired(), Length(max=MAX_LENGTH)],
-        description=f'максимум {MAX_LENGTH} символов'
-    )
-    email = EmailField(
-        validators=[
-            Email(),
-            Unique(message='Пользователь с таким e-mail уже существует'),
-            Optional(),
+class AddUserForm(PasswordChangeForm, UserProfileForm):
+    class Meta:
+        fields = [
+            'username',
+            'password',
+            'password2',
+            'last_name',
+            'first_name',
+            'middle_name',
+            'email',
         ]
-    )
-
-    def update_instance(self):
-        instance = super().update_instance()
-        if instance.password:
-            instance.password = generate_password_hash(instance.password)
-        return instance
-
-    def post_validate(self):
-        success = super().post_validate()
-        password = self.data.get('password')
-        try:
-            password_validation.validate_password(password, self.instance)
-        except ValidationError as e:
-            self.password.errors.extend(e.args[0])
-            return False
-        return success
 
 
-class AdminPasswordChangeForm(SiteForm):
-    password = PasswordField(
-        validators=[
-            InputRequired(),
-            EqualTo(fieldname='password2', message='Пароли не совпадают'),
-        ],
-        description=password_validation.password_validators_description_html(),
-    )
-    password2 = PasswordField(
-        label='Подтверждение пароля',
-        validators=[InputRequired()],
-        description='Для подтверждения введите, пожалуйста, пароль ещё раз.'
-    )
-
-    def post_validate(self):
-        success = super().post_validate()
-        password = self.data.get('password')
-        try:
-            password_validation.validate_password(password, self.instance)
-        except ValidationError as e:
-            self.password.errors.extend(e.args[0])
-            return False
-        return success
+class AdminPasswordChangeForm(PasswordChangeForm):
+    pass

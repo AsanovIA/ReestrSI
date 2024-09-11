@@ -23,9 +23,10 @@ class Settings(BaseSettings):
     UPLOAD_FOLDER: str = os.path.join(BASEDIR, 'uploads')
 
     APPS: List[str] = [
-        'src.datasource',
         'src.service',
+        'src.datasource',
         'src.users',
+        'src.account',
     ]
 
     AUTH_PASSWORD_VALIDATORS: List[dict] = [

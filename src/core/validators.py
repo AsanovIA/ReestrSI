@@ -1,4 +1,5 @@
 from flask import g
+from flask_login import current_user
 from werkzeug.datastructures import FileStorage
 from wtforms.validators import ValidationError
 
@@ -43,4 +44,15 @@ class UniqueFile:
         ]
 
         if Repository.task_exists(filters):
+            raise ValidationError(self.message)
+
+
+class OldPassword:
+    def __init__(self, message=None):
+        if not message:
+            message = 'Старый пароль неверен'
+        self.message = message
+
+    def __call__(self, form, field):
+        if not current_user.check_password(field.data):
             raise ValidationError(self.message)

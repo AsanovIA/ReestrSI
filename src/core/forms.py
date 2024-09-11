@@ -21,8 +21,10 @@ class SiteForm(FlaskForm):
         self.changed_data = []
         self.fields = []
         fields = getattr(self.Meta, 'fields', None)
+        self.set_attributes(fields)
 
-        def set_attributes():
+    def set_attributes(self, fields):
+        def set_field_attributes():
             #  Установка label полей формы
             field.label.text = label_for_field(field.name, form=self) + ':'
 
@@ -64,13 +66,13 @@ class SiteForm(FlaskForm):
             for field_name in fields:
                 field = self[field_name]
                 self.fields.append(field)
-                set_attributes()
+                set_field_attributes()
         else:
             for field in self:
                 if field.name in self.exclude:
                     continue
                 self.fields.append(field)
-                set_attributes()
+                set_field_attributes()
 
     def get_readonly_fields(self, readonly_fields=None):
         if readonly_fields is None:

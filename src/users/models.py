@@ -24,6 +24,8 @@ class UserProfile(BasePK, Base):
         info={'label': 'e-mail'}, unique=True)
     is_active: Mapped[bool] = mapped_column(
         info={'label': 'Активный'}, default=True)
+    is_superuser: Mapped[bool] = mapped_column(
+        info={'label': 'Суперпользователь'}, default=False)
     date_joined: Mapped[created_at] = mapped_column(
         info={'label': 'Дата регистрации'})
 

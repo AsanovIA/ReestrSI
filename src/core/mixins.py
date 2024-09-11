@@ -107,6 +107,7 @@ class SiteMixin(View):
                 },
                 'btn': self.get_btn(),
                 'object_verbose_name': object_verbose_name,
+                'username': g.user.get_short_name(),
             })
         kwargs.update(context)
 
