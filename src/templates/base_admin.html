@@ -1,28 +1,15 @@
 {% extends 'base.html' %}
 {% block extrastyle %}
-    {% if btn %}
+  {% if btn %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/submit_row.css') }}">
-    {% endif %}
+  {% endif %}
 {% endblock extrastyle %}
 
-{% block header %}
-    {% if perm.perm_change %}
-        <!-- Header -->
-        <div id="header">
-            {% block mainmenu %}
-            <div id="branding" class="main-menu">
-                {% for m in main_menu %}
-                    <a href="{{ m.url }}" class="text">{{ m.title }}</a>
-                {% endfor %}
-            </div>
-            {% endblock mainmenu %}
+{% block usertools %}
+  {% if perm.perm_change %}
+    <div id="user-tools">
+      <p><a href="{{ url_for('auth.logout') }}">Выйти</a>
+    </div>
+  {% endif %}
+{% endblock usertools %}
 
-            {% block usertools %}
-            <div id="user-tools">
-                <p><a href="{{ url_for('auth.logout') }}">Выйти</a>
-            </div>
-            {% endblock usertools %}
-        </div>
-        <!-- END Header -->
-    {% endif %}
-{% endblock header %}

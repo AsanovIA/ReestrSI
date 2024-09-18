@@ -44,12 +44,7 @@ if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
 
 if __name__ == "__main__":
-    if '--db_default' in sys.argv:
-        from default_db.db_restore import set_default_db
-
-        set_default_db()
-
-    elif '--db_convert' in sys.argv:
+    if '--db_convert' in sys.argv:
         from convert_db.convert_excel_to_db import import_db, create_users
 
         import_db()

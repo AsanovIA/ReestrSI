@@ -42,6 +42,9 @@ class SiteMixin(View):
     form_class_name = None
     empty_value_display = EMPTY_VALUE_DISPLAY
     sidebar = None
+    perm_change = False
+    perm_add = False
+    perm_delete = False
 
     def __init__(self, blueprint_name, template=None):
         self.blueprint_name = blueprint_name
@@ -86,13 +89,18 @@ class SiteMixin(View):
         return {}
 
     def get_context_data(self, **kwargs):
+        menu_for = False
         context = {
             'title': settings.SITE_NAME,
             'sidebar': self.sidebar,
-            'perm': {'perm_change': False},
             'media': self.get_media(),
+            'btn': self.get_btn(),
         }
         if 'admin' in request.blueprints:
+            self.perm_change = True
+            self.perm_add = True
+            self.perm_delete = True
+            menu_for = True
             if hasattr(g.model.Meta, 'verbose_name_change'):
                 object_verbose_name = g.model.Meta.verbose_name_change
             elif hasattr(g.model.Meta, 'verbose_name'):
@@ -101,13 +109,16 @@ class SiteMixin(View):
                 object_verbose_name = ''
 
             context.update({
-                'main_menu': self.get_admin_main_menu(),
-                'perm': {
-                    'perm_add': True, 'perm_delete': True, 'perm_change': True,
-                },
-                'btn': self.get_btn(),
                 'object_verbose_name': object_verbose_name,
             })
+        context.update({
+            'main_menu': self.get_main_menu(admin=menu_for),
+            'perm': {
+                'perm_change': self.perm_change,
+                'perm_add': self.perm_add,
+                'perm_delete': self.perm_delete,
+            },
+        })
         kwargs.update(context)
 
         return kwargs
@@ -118,21 +129,26 @@ class SiteMixin(View):
         return media
 
     @classmethod
-    def get_admin_main_menu(cls):
+    def get_main_menu(cls, admin=False):
+        endpoint = 'admin.si.list_si' if admin else '.index'
         main_menu = [
             {
                 'title': 'Средства измерения',
-                'url': try_get_url('admin.si.list_si')
-            },
-            {
-                'title': 'Обслуживание',
-                'url': try_get_url('admin.service.list_service')
-            },
-            {
-                'title': 'Настройки',
-                'url': try_get_url('admin.settings.index')
+                'url': try_get_url(endpoint)
             },
         ]
+        if admin:
+            main_menu += [
+                {
+                    'title': 'Обслуживание',
+                    'url': try_get_url('admin.service.list_service')
+                },
+                {
+                    'title': 'Настройки',
+                    'url': try_get_url('admin.settings.index')
+                },
+            ]
+
         return main_menu
 
     @staticmethod
@@ -486,7 +502,7 @@ class FormMixin(ObjectMixin):
 
         return context
 
-    def get_form_kwargs(self):
+    def get_form_kwargs(self, **kwargs):
         kwargs = {
             'meta': {'locales': settings.LANGUAGES},
             'obj': g.object,

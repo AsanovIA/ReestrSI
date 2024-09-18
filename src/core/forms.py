@@ -12,8 +12,9 @@ from .utils import (
 
 
 class SiteForm(FlaskForm):
-    def __init__(self, obj=None, *args, **kwargs):
+    def __init__(self, obj=None, readonly=False, *args, **kwargs):
         super().__init__(obj=obj, *args, **kwargs)
+        self.readonly = readonly
         self.instance = obj or g.model()
         exclude = getattr(getattr(self, 'Meta', []), 'exclude', [])
         self.readonly_fields = list(self.get_readonly_fields())
@@ -27,11 +28,11 @@ class SiteForm(FlaskForm):
             field.label.text = label_for_field(field.name, form=self) + ':'
 
             field.label_class = {}
-            if getattr(field.flags, 'required', None):
+            if getattr(field.flags, 'required', None) and not self.readonly:
                 field.label_class = {'class': 'required'}
 
             field.is_readonly = False
-            if field.name in self.readonly_fields:
+            if field.name in self.readonly_fields or self.readonly:
                 field.is_readonly = True
                 field.description = ''
 

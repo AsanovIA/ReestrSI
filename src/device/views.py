@@ -1,9 +1,8 @@
 from src.core import LOOKUP_SEP, try_get_url
-from src.service.views import ListSiView
+from src.service.views import ListSiView, ChangeSiView
 
 
 class ListObjectView(ListSiView):
-    fields_link = None
     decorators = []
     fields_filter = [
         'group_si',
@@ -54,3 +53,18 @@ class ListObjectView(ListSiView):
 
     def get_reset_filter_url(self):
         return try_get_url('.index')
+
+    def get_url_for_result(self, result):
+        return try_get_url('.view_device', pk=result.id)
+
+
+class ViewSiView(ChangeSiView):
+    def get_form_kwargs(self, **kwargs):
+        kwargs = super().get_form_kwargs(**kwargs)
+        kwargs.update(readonly=True)
+
+        return kwargs
+
+    def get_history_url(self):
+        return try_get_url('.history_device', pk=self.pk)
+

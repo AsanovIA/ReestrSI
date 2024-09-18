@@ -1,5 +1,12 @@
-{% if btn and perm.perm_change %}
+{% if btn %}
 <div class="submit-row">
+
+    {% if btn.btn_history %}
+    {# Перенаправление на страницу истории обслужтвания объекта #}
+    <a href="{{ history_url }}" class="history">история обслуживания</a>
+    {% endif %}
+
+  {% if perm.perm_change %}
 
     {% if btn.btn_save %}
     {# Сохранить объект и перенаправить #}
@@ -21,11 +28,6 @@
     <a href="{{ log_url }}" class="history">история изменений</a>
     {% endif %}
 
-    {% if btn.btn_history %}
-    {# Перенаправление на страницу истории обслужтвания объекта #}
-    <a href="{{ history_url }}" class="history">история обслуживания</a>
-    {% endif %}
-
     {% if btn.btn_service %}
     {# Перевести СИ в сервис или посмотреть на СИ в сервисе #}
     <a href="{{ service_url }}" class="{% if class_link %}{{ class_link }}{% else %}addlink{% endif %}">{{ link_text }}</a>
@@ -36,5 +38,6 @@
     <a href="{{ add_url }}" class="addlink">добавить {{ object_verbose_name|lower }}</a>
     {% endif %}
 
+  {% endif %}
 </div>
 {% endif %}
