@@ -121,20 +121,25 @@ class ChangeSiView(SiMixin, ChangeMixin):
             pk=g.object.id
         )
 
+    def get_history_url(self):
+        return try_get_url('admin.service.history_service', pk=self.pk)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['history_url'] = try_get_url(
-            'admin.service.history_service', pk=self.pk
-        )
-        if g.object.is_service:
-            context['service_url'] = self.get_service_url()
-            context['link_text'] = 'Посмотреть в обслуживании'
-        else:
-            context['service_url'] = try_get_url('.add_service', pk=self.pk)
-            context['link_text'] = 'Направить на обслуживание'
+        context['history_url'] = self.get_history_url()
+        if self.perm_change:
+            if g.object.is_service:
+                context['service_url'] = self.get_service_url()
+                context['link_text'] = 'Посмотреть в обслуживании'
+            else:
+                context['service_url'] = try_get_url(
+                    '.add_service', pk=self.pk
+                )
+                context['link_text'] = 'Направить на обслуживание'
 
-        context['delete_url'] = self.get_delete_url()
-        context['btn']['btn_delete'] = True
+        if self.perm_delete:
+            context['delete_url'] = self.get_delete_url()
+            context['btn']['btn_delete'] = True
 
         return context
 

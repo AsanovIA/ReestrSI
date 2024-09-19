@@ -16,7 +16,21 @@
   <body class="{% block bodyclass %}{% endblock %}">
     <!-- Container -->
     <div id="container">
-      {% block header %}{% endblock header %}
+      {% block header %}
+        <!-- Header -->
+        <div id="header">
+          {% block mainmenu %}
+            <div id="branding" class="main-menu">
+              {% for m in main_menu %}
+                <a href="{{ m.url }}" class="text">{{ m.title }}</a>
+              {% endfor %}
+            </div>
+          {% endblock mainmenu %}
+
+          {% block usertools %}{% endblock usertools %}
+        </div>
+        <!-- END Header -->
+      {% endblock header %}
 
       <!-- main -->
       <div class="main" id="main">
