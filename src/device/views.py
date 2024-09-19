@@ -36,9 +36,9 @@ class UserListSiView(UserSiView, ListSiView):
         'control_vp',
         'employee',
         'employee' + LOOKUP_SEP + 'division',
+        'is_service',
         'service' + LOOKUP_SEP + 'date_last_service',
         'service' + LOOKUP_SEP + 'date_next_service',
-        'is_service',
     ]
     fields_search = [
         'name_si' + LOOKUP_SEP + 'name',

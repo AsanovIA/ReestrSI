@@ -20,7 +20,7 @@ class FilterForm:
         return len(self.filters)
 
     def construct_filters(self):
-        relation_filters, boolean_filters, date_filters = [], [], []
+        filters = []
         for name in self.fields_filter:
             model = self.model
             field_name = name
@@ -53,17 +53,16 @@ class FilterForm:
 
             if isinstance(field.property, Relationship):
                 filter_ = RelatedListFilter(**kwargs)
-                relation_filters.append(filter_)
             elif isinstance(field.type, Boolean):
                 filter_ = BooleanListFilter(**kwargs)
-                boolean_filters.append(filter_)
             elif isinstance(field.type, Date):
                 filter_ = DateListFilter(**kwargs)
-                date_filters.append(filter_)
             else:
                 raise Exception(f'Фильтра для {field.key} нет')
 
-        return relation_filters + boolean_filters + date_filters
+            filters.append(filter_)
+
+        return filters
 
 
 class ListFilter:
