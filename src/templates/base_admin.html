@@ -5,26 +5,12 @@
   {% endif %}
 {% endblock extrastyle %}
 
-{% block header %}
+{% block usertools %}
   {% if perm.perm_change %}
-    <!-- Header -->
-    <div id="header">
-      {% block mainmenu %}
-      <div id="branding" class="main-menu">
-        {% for m in main_menu %}
-          <a href="{{ m.url }}" class="text">{{ m.title }}</a>
-        {% endfor %}
-      </div>
-      {% endblock mainmenu %}
-
-      {% block usertools %}
-      <div id="user-tools">
-        <strong>{{ username }}</strong> /
-        <a href="{{ url_for('admin.account.password_change') }}">Сменить пароль</a> /
-        <a href="{{ url_for('auth.logout') }}">Выйти</a>
-      </div>
-      {% endblock usertools %}
+    <div id="user-tools">
+      <strong>{{ username }}</strong> /
+      <a href="{{ url_for('admin.account.password_change') }}">Сменить пароль</a> /
+      <a href="{{ url_for('auth.logout') }}">Выйти</a>
     </div>
-    <!-- END Header -->
   {% endif %}
-{% endblock header %}
+{% endblock usertools %}
