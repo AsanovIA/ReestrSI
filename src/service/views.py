@@ -6,7 +6,7 @@ from sqlalchemy.exc import NoResultFound
 from src.core import Media, Query
 from src.db.repository import Repository
 from src.core.mixins import (
-    ListMixin, ChangeMixin, AddMixin, DeleteMixin, FormMixin
+    SiteMixin, ListMixin, ChangeMixin, AddMixin, DeleteMixin, FormMixin
 )
 from src.core.utils import get_model, try_get_url, format_html
 
@@ -14,13 +14,12 @@ IS_EXPLOITED_SI = 'Эксплуатируется'
 REGISTRATION_SI = 'Регистрация'
 
 
-class SiMixin:
+class SiMixin(SiteMixin):
     model_name = 'si'
     extra_fields = (
         'date_last_service',
         'date_next_service',
         'certificate',
-        'certificate_hash',
     )
 
     def get_success_url(self):
@@ -168,7 +167,6 @@ class AddSiView(SiMixin, AddMixin):
         object_service.date_last_service = obj.date_last_service
         object_service.date_next_service = obj.date_next_service
         object_service.certificate = obj.certificate
-        object_service.certificate_hash = obj.certificate_hash
         object_service.is_out = True
         object_service.note = REGISTRATION_SI
         obj.status_service = IS_EXPLOITED_SI
@@ -186,11 +184,14 @@ class DeleteSiView(SiMixin, DeleteMixin):
     def service(self):
         return get_model('service')
 
+    @property
+    def history_list(self):
+        return getattr(g.object, 'service', [])
+
     def get_deleted_objects(self):
-        history_list = self.get_history_list()
         list_files = []
         field = self.service.certificate
-        for obj in history_list:
+        for obj in self.history_list:
             filename = getattr(obj, field.name)
             if not filename:
                 continue
@@ -203,15 +204,6 @@ class DeleteSiView(SiMixin, DeleteMixin):
             list_files.append(link_file)
 
         return list_files
-
-    def get_history_list(self):
-        query = Query(
-            model=self.service,
-            filters=[self.service.si_id == self.pk]
-        )
-        history_list = Repository.task_get_list(query)
-
-        return history_list
 
     def get_object_url(self, obj):
         return try_get_url(
@@ -226,8 +218,7 @@ class DeleteSiView(SiMixin, DeleteMixin):
         return context
 
     def post(self, **kwargs):
-        history_list = self.get_history_list()
-        for obj in history_list:
+        for obj in self.history_list:
             self.delete_files(self.service.__table__.columns, obj)
 
         return super().post(**kwargs)

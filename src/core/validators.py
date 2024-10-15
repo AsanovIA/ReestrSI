@@ -36,11 +36,8 @@ class UniqueFile:
         filename = secure_filename(field.data.filename)
 
         filters = [
-            (model.id != instance.id)
-            & (
-                    (getattr(model, field.name) == filename)
-                    | (getattr(model, field.name + '_hash') == field.filehash)
-            )
+            model.id != instance.id,
+            getattr(model, field.name) == filename
         ]
 
         if Repository.task_exists(filters):

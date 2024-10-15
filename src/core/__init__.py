@@ -49,6 +49,7 @@ from src.core.utils import (
     lookup_field,
     value_for_field,
     secure_filename,
+    translit,
     try_get_url,
     upload_for_field
 )

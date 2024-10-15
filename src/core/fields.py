@@ -108,7 +108,6 @@ class ExtendedFileField(FileField):
         if description is None:
             description = self.set_description()
         self.filename = None
-        self.filehash = None
         super().__init__(description=description, **kwargs)
 
     def set_description(self):

@@ -265,7 +265,6 @@ class Service(BasePK, Base):
             'upload': 'certificate/',
         }
     )
-    certificate_hash: Mapped[Optional[str]]
     note: Mapped[Optional[str_1000]] = mapped_column(
         info={'label': 'Примечание'}
     )

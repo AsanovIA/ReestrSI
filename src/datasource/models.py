@@ -137,7 +137,6 @@ class DescriptionMethod(BaseViewName, Base):
             'upload': 'description/',
         }
     )
-    description_hash: Mapped[Optional[str]]
     method: Mapped[Optional[str]] = mapped_column(
         info={
             'label': 'Методика поверки СИ',
@@ -145,8 +144,6 @@ class DescriptionMethod(BaseViewName, Base):
             'upload': 'method/',
         }
     )
-    method_hash: Mapped[Optional[str]]
-
     si: Mapped["Si"] = relationship(back_populates="description_method")
 
     class Meta(BaseViewName.Meta, Base.Meta):

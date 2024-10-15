@@ -1,6 +1,7 @@
 import datetime
 import hashlib
 import os
+import re
 
 from functools import lru_cache
 from importlib import import_module
@@ -20,6 +21,90 @@ SETTINGS_APPS = {
     'datasource': 'src.datasource',
     'users': 'src.users',
 }
+TRANSTABLE = (
+    ("'", "'"),
+    ('"', '"'),
+    ("‘", "'"),
+    ("’", "'"),
+    ("«", '"'),
+    ("»", '"'),
+    ("“", '"'),
+    ("”", '"'),
+    ("–", "-"),  # en dash
+    ("—", "-"),  # em dash
+    ("‒", "-"),  # figure dash
+    ("−", "-"),  # minus
+    ("…", "..."),
+    ("№", "#"),
+    # upper
+    ("А", "A"),
+    ("Б", "B"),
+    ("В", "V"),
+    ("Г", "G"),
+    ("Д", "D"),
+    ("Е", "E"),
+    ("Ё", "E"),
+    ("Ж", "ZH"),
+    ("З", "Z"),
+    ("И", "I"),
+    ("Й", "I"),
+    ("К", "K"),
+    ("Л", "L"),
+    ("М", "M"),
+    ("Н", "N"),
+    ("О", "O"),
+    ("П", "P"),
+    ("Р", "R"),
+    ("С", "S"),
+    ("Т", "T"),
+    ("У", "U"),
+    ("Ф", "F"),
+    ("Х", "KH"),
+    ("Ц", "TS"),
+    ("Ч", "CH"),
+    ("Ш", "SH"),
+    ("Щ", "SHCH"),
+    ("Ъ", "IE"),
+    ("Ы", "Y"),
+    ("Ь", ""),
+    ("Э", "E"),
+    ("Ю", "IU"),
+    ("Я", "IA"),
+    # lower
+    ("а", "a"),
+    ("б", "b"),
+    ("в", "v"),
+    ("г", "g"),
+    ("д", "d"),
+    ("е", "e"),
+    ("ё", "e"),
+    ("ж", "zh"),
+    ("з", "z"),
+    ("и", "i"),
+    ("й", "i"),
+    ("к", "k"),
+    ("л", "l"),
+    ("м", "m"),
+    ("н", "n"),
+    ("о", "o"),
+    ("п", "p"),
+    ("р", "r"),
+    ("с", "s"),
+    ("т", "t"),
+    ("у", "u"),
+    ("ф", "f"),
+    ("х", "kh"),
+    ("ц", "ts"),
+    ("ч", "ch"),
+    ("ш", "sh"),
+    ("щ", "shch"),
+    ("ъ", "ie"),
+    ("ы", "y"),
+    ("ь", ""),
+    ("э", "e"),
+    ("ю", "iu"),
+    ("я", "ia"),
+)  # https://github.com/last-partizan/pytils/blob/master/pytils/translit.py
 
 
 def boolean_icon(field_val):
@@ -219,7 +304,19 @@ def value_for_field(value, field_name):
 
 
 def secure_filename(filename: str) -> str:
-    return secure_filename_(filename)
+    filename = translit(filename)
+    filename = secure_filename_(filename)
+    filename = re.sub(r'_{2,}', '_', filename)
+    filename = re.sub(r'\.{2,}', '.', filename)
+
+    return filename
+
+
+def translit(text):
+    if isinstance(text, str):
+        for symbol_in, symbol_out in TRANSTABLE:
+            text = text.replace(symbol_in, symbol_out)
+    return text
 
 
 def try_get_url(endpoint: str, **kwargs):

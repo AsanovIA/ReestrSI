@@ -6,8 +6,11 @@ from werkzeug.datastructures import FileStorage
 
 from . import ExtendedFileField, ExtendedSelectField
 from .utils import (
-    FIELDS_EXCLUDE, calculate_file_hash, label_for_field,
-    secure_filename, try_get_url, upload_for_field,
+    FIELDS_EXCLUDE,
+    label_for_field,
+    secure_filename,
+    try_get_url,
+    upload_for_field,
 )
 
 
@@ -57,14 +60,15 @@ class SiteForm(FlaskForm):
                         request.method == 'POST'
                         and isinstance(field.data, FileStorage)
                 ):
-                    value = getattr(field.data, 'filename', None)
-                    field.filehash = calculate_file_hash(field.data)
+                    filename = getattr(field.data, 'filename')
+                    if filename:
+                        filename = secure_filename(filename)
                 else:
-                    value = field.data
-                if not value:
+                    filename = field.data
+                if not filename:
                     return
-                field.filename = value
-                path_file = os.path.join(field.upload, field.filename)
+                field.filename = filename
+                path_file = os.path.join(field.upload, filename)
                 field.url = try_get_url('source.view_file', filename=path_file)
 
             #  Установка выбранных значений в Select формы
@@ -178,14 +182,10 @@ class SiteForm(FlaskForm):
             if self.readonly_fields and field.name in self.readonly_fields:
                 continue
 
-            if isinstance(field, ExtendedFileField):
-                filename = secure_filename(request.files[field.name].filename)
+            if isinstance(field, ExtendedFileField) and field.filename:
                 old_filename = getattr(instance, field.name, None)
-                old_filehash = getattr(instance, field.name + '_hash', None)
                 if (
-                        filename
-                        and filename != old_filename
-                        and field.filehash != old_filehash
+                        field.filename != old_filename
                         or f'{field.name}_clear' in request.form
                 ):
                     changed_fields.append(field)

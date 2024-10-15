@@ -64,7 +64,7 @@ class SiForm(SiteForm):
         ]
 
     def get_readonly_fields(self, readonly_fields=None):
-        if self.instance.is_service or not self.instance.service:
+        if self.instance.is_service:
             readonly_fields = [
                 'date_last_service', 'date_next_service', 'certificate'
             ]

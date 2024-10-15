@@ -28,7 +28,6 @@ from src.core.utils import (
     get_model,
     label_for_field,
     lookup_field,
-    secure_filename,
     try_get_url,
 )
 
@@ -537,7 +536,6 @@ class FormMixin(ObjectMixin):
 
     def change_files(self, obj):
         for field_name, file in request.files.items():
-            field_hash = field_name + '_hash'
             field = getattr(g.form, field_name)
             folder = str(os.path.join(
                 current_app.config['UPLOAD_FOLDER'],
@@ -547,16 +545,13 @@ class FormMixin(ObjectMixin):
             if f'{field_name}_clear' in request.form:
                 os.remove(os.path.join(folder, old_filename))
                 setattr(obj, field_name, None)
-                setattr(obj, field_hash, None)
             elif file.filename:
                 if not os.path.exists(folder):
                     os.makedirs(folder)
                 if old_filename:
                     os.remove(os.path.join(folder, old_filename))
-                filename = secure_filename(file.filename)
-                file.save(os.path.join(folder, filename))
-                setattr(obj, field_name, filename)
-                setattr(obj, field_hash, field.filehash)
+                file.save(os.path.join(folder, field.filename))
+                setattr(obj, field_name, field.filename)
 
         return obj
 
