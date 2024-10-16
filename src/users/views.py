@@ -1,4 +1,6 @@
 from flask import g
+
+from src.core import Query
 from src.core.mixins import (
     SettingsMixin, IndexMixin, ListMixin, ChangeMixin, AddMixin, DeleteMixin
 )
@@ -9,7 +11,12 @@ class IndexView(IndexMixin):
 
 
 class ListObjectView(SettingsMixin, ListMixin):
-    pass
+    def get_query(self, query=None):
+        query = super().get_query(query)
+        if not g.user.is_superuser:
+            query += Query(filters=[~g.model.is_superuser])
+
+        return query
 
 
 class ChangeObjectView(SettingsMixin, ChangeMixin):

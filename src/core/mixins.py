@@ -314,9 +314,8 @@ class ListMixin(SiteMixin):
     def get_query(self, query=None):
         if query is None:
             query = Query()
-        if not request.args:
-            return query
-        query += Query(params=request.args, fields_search=g.fields_search)
+        if request.args:
+            query += Query(params=request.args, fields_search=g.fields_search)
         return query
 
     def get_queryset(self, query):
