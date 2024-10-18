@@ -1,18 +1,19 @@
 import os
 from typing import List
-from pydantic_settings import BaseSettings, SettingsConfigDict
+# from pydantic_settings import BaseSettings, SettingsConfigDict
 
 NAMESUBD = 'sqlite'
 # NAMESUBD = 'postgres'
 
 
-class Settings(BaseSettings):
-    DB_HOST: str
-    DB_PORT: int
-    DB_NAME: str
-    DB_USER: str
-    DB_PASS: str
-    SECRET_KEY: str
+class Settings:
+# class Settings(BaseSettings):
+#     DB_HOST: str
+#     DB_PORT: int
+#     DB_NAME: str
+#     DB_USER: str
+#     DB_PASS: str
+    SECRET_KEY: str = '30e2a69156d3af7c915d02fed9a1c6fcf86202b33887d8fb784904ae1b37122e'
 
     BASEDIR: str = os.path.dirname(os.path.abspath(__file__))
     ALLOWED_EXTENSIONS: List[str] = ['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif']
@@ -47,11 +48,11 @@ class Settings(BaseSettings):
         if NAMESUBD == 'sqlite':
             path = os.path.join(self.BASEDIR, "db", "reestrsi.db")
             return f'sqlite:///{path}'
-        elif NAMESUBD == 'postgres':
-            return (f"postgresql+psycopg://{self.DB_USER}:{self.DB_PASS}@"
-                    f"{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}")
+        # elif NAMESUBD == 'postgres':
+        #     return (f"postgresql+psycopg://{self.DB_USER}:{self.DB_PASS}@"
+        #             f"{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}")
 
-    model_config = SettingsConfigDict(env_file=f"{BASEDIR}/../.env")
+    # model_config = SettingsConfigDict(env_file=f"{BASEDIR}/../.env")
 
 
 settings = Settings()
